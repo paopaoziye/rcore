@@ -28,6 +28,7 @@ static const MemMapEntry my_board_memmap[] = {
     [MY_BOARD_MROM]  = {        0x0,        0x8000 },   
     [MY_BOARD_SRAM]  = {     0x8000,        0x8000 },
     [MY_BOARD_UART0] = { 0x10000000,         0x100 }, 
+    [MY_BOARD_FLASH] = { 0x20000000,     0x2000000 }, 
     [MY_BOARD_DRAM]  = { 0x80000000,          0x80 },   
 };
 //初始化CPU，参考virt_machine_init
@@ -87,7 +88,7 @@ static void my_board_memory_create(MachineState *machine)
     MemoryRegion *dram_mem = g_new(MemoryRegion, 1);  //DRAM
     MemoryRegion *sram_mem = g_new(MemoryRegion, 1);  //SRAM
     MemoryRegion *mask_rom = g_new(MemoryRegion, 1);  //MROM  
-    //为内存区域分配空间并将其挂载到system_memory对应基址
+    //为内存区域分配空间并将其加入到system_memory
     memory_region_init_ram(dram_mem, NULL, "riscv_my_board_board.dram",
                            my_board_memmap[MY_BOARD_DRAM].size, &error_fatal);
     memory_region_add_subregion(system_memory, 
@@ -104,18 +105,55 @@ static void my_board_memory_create(MachineState *machine)
                                 my_board_memmap[MY_BOARD_MROM].base, mask_rom);
     //设置CPU的复位向量
     riscv_setup_rom_reset_vec(machine, &s->soc[0], 
-                              my_board_memmap[MY_BOARD_MROM].base,
+                              my_board_memmap[MY_BOARD_FLASH].base,
                               my_board_memmap[MY_BOARD_MROM].base,
                               my_board_memmap[MY_BOARD_MROM].size,
                               0x0, 0x0);
+}
+//创建flash并进行映射，参考virt_machine_init、GITvirt_flash_create1和virt_flash_map1
+static void my_board_flash_create(MachineState *machine){
+    //获取MyBoardState以及system_memory
+    MyBoardState *s = RISCV_MY_BOARD_MACHINE(machine);
+    MemoryRegion *system_memory = get_system_memory();
+    //设置pflash的属性，即扇区大小、总线宽度、设备宽度、采用小端字节序、id和名字
+    DeviceState *dev = qdev_new(TYPE_PFLASH_CFI01);
+    qdev_prop_set_uint64(dev, "sector-length", MY_BOARD_FLASH_SECTOR_SIZE);
+    qdev_prop_set_uint8(dev, "width", 4);
+    qdev_prop_set_uint8(dev, "device-width", 2);
+    qdev_prop_set_bit(dev, "big-endian", false);
+    qdev_prop_set_uint16(dev, "id0", 0x89);
+    qdev_prop_set_uint16(dev, "id1", 0x18);
+    qdev_prop_set_uint16(dev, "id2", 0x00);
+    qdev_prop_set_uint16(dev, "id3", 0x00);
+    qdev_prop_set_string(dev, "name", "my_board.flash0");
+    //将pflash挂载到开发板
+    object_property_add_child(OBJECT(s), "my_board.flash0", OBJECT(dev));
+    object_property_add_alias(OBJECT(s), "pflash0",
+                              OBJECT(dev), "drive");
+    s->flash = PFLASH_CFI01(dev);
+    pflash_cfi01_legacy_drive(s->flash,drive_get(IF_PFLASH, 0, 0));
+    //检查flash基地址是否对齐并保证扇区数量不超过UINT32_MAX
+    hwaddr flashsize = my_board_memmap[MY_BOARD_FLASH].size;
+    hwaddr flashbase = my_board_memmap[MY_BOARD_FLASH].base;
+    assert(QEMU_IS_ALIGNED(flashsize, MY_BOARD_FLASH_SECTOR_SIZE));
+    assert(flashsize / MY_BOARD_FLASH_SECTOR_SIZE <= UINT32_MAX);
+    //设置flash的块总数并初始化flash
+    qdev_prop_set_uint32(dev, "num-blocks", flashsize / MY_BOARD_FLASH_SECTOR_SIZE);
+    sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
+    //将flash加入到系统内存空间
+    memory_region_add_subregion(system_memory, flashbase,
+                                sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
+                                                       0));    
 }
 //类初始化函数
 static void my_board_machine_init(MachineState *machine)
 {
     //创建CPU
     my_board_cpu_create(machine);
-    // 创建主存
+    //创建主存
     my_board_memory_create(machine);
+    //创建flash
+    my_board_flash_create(machine);
 }
 //实例初始化函数
 static void my_board_machine_instance_init(Object *obj)
