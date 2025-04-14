@@ -33,12 +33,18 @@ enum{
     MY_BOARD_CLINT,
     MY_BOARD_PLIC,
     MY_BOARD_UART0,
+    MY_BOARD_UART1,
+    MY_BOARD_UART2,
+    MY_BOARD_RTC,
     MY_BOARD_FLASH,
     MY_BOARD_DRAM,
 };
 //定义中断号
 enum{
     MY_BOARD_UART0_IRQ = 10,
+    MY_BOARD_UART1_IRQ = 11,
+    MY_BOARD_UART2_IRQ = 12,
+    MY_BOARD_RTC_IRQ   = 13,
 
 };
 //PLIC相关定义
@@ -50,6 +56,7 @@ enum{
 #define MY_BOARD_PLIC_ENABLE_STRIDE  0x80         //中断使能寄存器之间的地址间隔
 #define MY_BOARD_PLIC_CONTEXT_BASE   0x200000     //上下文保存寄存器的基址
 #define MY_BOARD_PLIC_CONTEXT_STRIDE 0x1000       //上下文保存寄存器之间的地址间隔
-
+#define MY_BOARD_PLIC_SIZE(__num_context) \
+    (MY_BOARD_PLIC_CONTEXT_BASE + (__num_context) * MY_BOARD_PLIC_CONTEXT_STRIDE)
 
 #endif

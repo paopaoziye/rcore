@@ -29,8 +29,11 @@ static const MemMapEntry my_board_memmap[] = {
     [MY_BOARD_MROM]  = {        0x0,        0x8000 },   
     [MY_BOARD_SRAM]  = {     0x8000,        0x8000 },
     [MY_BOARD_CLINT] = { 0x02000000,       0x10000 }, 
-    [MY_BOARD_PLIC]  = { 0x0c000000,     0x4000000 }, 
-    [MY_BOARD_UART0] = { 0x10000000,         0x100 }, 
+    [MY_BOARD_PLIC]  = { 0x0c000000,     MY_BOARD_PLIC_SIZE(MY_BOARD_CPUS_MAX * 2) }, 
+    [MY_BOARD_UART0] = { 0x10000000,         0x100 },
+    [MY_BOARD_UART1] = { 0x10001000,         0x100 },
+    [MY_BOARD_UART2] = { 0x10002000,         0x100 }, 
+    [MY_BOARD_RTC]   = { 0x10003000,        0x1000 },
     [MY_BOARD_FLASH] = { 0x20000000,     0x2000000 }, 
     [MY_BOARD_DRAM]  = { 0x80000000,          0x80 },   
 };
@@ -196,6 +199,34 @@ static void my_board_aclint_create(MachineState *machine){
             RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
     }
 }
+//创建rtc，参考virt_machine_init
+static void my_board_rtc_create(MachineState *machine)
+{   
+    //获取MyBoardState
+    MyBoardState *s = RISCV_MY_BOARD_MACHINE(machine);
+    //创建goldfish_rtc并进行内存映射，最后设置其中断号
+    sysbus_create_simple("goldfish_rtc", my_board_memmap[MY_BOARD_RTC].base,
+        qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_RTC_IRQ));
+}
+//创建三个uart，参考virt_machine_init
+static void my_board_serial_create(MachineState *machine)
+{
+    //获取MyBoardState以及system_memory
+    MemoryRegion *system_memory = get_system_memory();
+    MyBoardState *s = RISCV_MY_BOARD_MACHINE(machine);
+    //设置每个串口的内存映射、中断号、波特率以及小端字节序
+    //此外还设置了串口的后端，在QEMU启动时可以指定
+    serial_mm_init(system_memory, my_board_memmap[MY_BOARD_UART0].base,
+        0, qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_UART0_IRQ), 399193,
+        serial_hd(0), DEVICE_LITTLE_ENDIAN);
+    serial_mm_init(system_memory, my_board_memmap[MY_BOARD_UART1].base,
+        0, qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_UART1_IRQ), 399193,
+        serial_hd(1), DEVICE_LITTLE_ENDIAN);
+    serial_mm_init(system_memory, my_board_memmap[MY_BOARD_UART2].base,
+        0, qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_UART2_IRQ), 399193,
+        serial_hd(2), DEVICE_LITTLE_ENDIAN);
+}
+
 //类初始化函数
 static void my_board_machine_init(MachineState *machine)
 {
@@ -209,6 +240,10 @@ static void my_board_machine_init(MachineState *machine)
     my_board_plic_create(machine);
     //创建clint
     my_board_aclint_create(machine);
+    //创建rtc
+    my_board_rtc_create(machine);
+    //创建clint
+    my_board_serial_create(machine);
 }
 //实例初始化函数
 static void my_board_machine_instance_init(Object *obj)
