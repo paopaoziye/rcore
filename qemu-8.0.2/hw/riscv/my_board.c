@@ -16,6 +16,7 @@
 #include "hw/riscv/numa.h"
 #include "hw/intc/riscv_aclint.h"
 #include "hw/intc/riscv_aplic.h"
+#include "hw/intc/sifive_plic.h"
 
 #include "chardev/char.h"
 #include "sysemu/device_tree.h"
@@ -27,6 +28,8 @@
 static const MemMapEntry my_board_memmap[] = {
     [MY_BOARD_MROM]  = {        0x0,        0x8000 },   
     [MY_BOARD_SRAM]  = {     0x8000,        0x8000 },
+    [MY_BOARD_CLINT] = { 0x02000000,       0x10000 }, 
+    [MY_BOARD_PLIC]  = { 0x0c000000,     0x4000000 }, 
     [MY_BOARD_UART0] = { 0x10000000,         0x100 }, 
     [MY_BOARD_FLASH] = { 0x20000000,     0x2000000 }, 
     [MY_BOARD_DRAM]  = { 0x80000000,          0x80 },   
@@ -145,6 +148,54 @@ static void my_board_flash_create(MachineState *machine){
                                 sysbus_mmio_get_region(SYS_BUS_DEVICE(dev),
                                                        0));    
 }
+//创建plic，参考virt_create_plic
+static void my_board_plic_create(MachineState *machine){
+    //获取MyBoardState以及socket节点数量
+    MyBoardState *s = RISCV_MY_BOARD_MACHINE(machine);
+    int socket_count = riscv_socket_count(machine);
+    //为每个socket节点创建一个plic
+    int i,hart_count,base_hartid;
+    for ( i = 0; i < socket_count; i++) {
+        hart_count = riscv_socket_hart_count(machine, i);
+        base_hartid = riscv_socket_first_hartid(machine, i);
+        char *plic_hart_config;
+        //生成PLIC Hart配置字符串
+        plic_hart_config = riscv_plic_hart_config_string(machine->smp.cpus);
+        //设置对应PLIC的属性
+        s->plic[i] = sifive_plic_create(
+            my_board_memmap[MY_BOARD_PLIC].base + i *my_board_memmap[MY_BOARD_PLIC].size ,
+            plic_hart_config, hart_count , base_hartid,
+            MY_BOARD_PLIC_NUM_SOURCES,
+            MY_BOARD_PLIC_NUM_PRIORITIES,
+            MY_BOARD_PLIC_PRIORITY_BASE,
+            MY_BOARD_PLIC_PENDING_BASE,
+            MY_BOARD_PLIC_ENABLE_BASE,
+            MY_BOARD_PLIC_ENABLE_STRIDE,
+            MY_BOARD_PLIC_CONTEXT_BASE,
+            MY_BOARD_PLIC_CONTEXT_STRIDE,
+            my_board_memmap[MY_BOARD_PLIC].size);
+        g_free(plic_hart_config);
+    }
+}
+//创建clint，参考virt_machine_init
+static void my_board_aclint_create(MachineState *machine){
+    int i , hart_count,base_hartid;
+    int socket_count = riscv_socket_count(machine);
+    //为每个socket节点创建clint
+    for ( i = 0; i < socket_count; i++) {
+        base_hartid = riscv_socket_first_hartid(machine, i);
+        hart_count = riscv_socket_hart_count(machine, i);
+
+        riscv_aclint_swi_create(
+        my_board_memmap[MY_BOARD_CLINT].base + i *my_board_memmap[MY_BOARD_CLINT].size,
+        base_hartid, hart_count, false);
+        riscv_aclint_mtimer_create(my_board_memmap[MY_BOARD_CLINT].base +
+             + i *my_board_memmap[MY_BOARD_CLINT].size+ RISCV_ACLINT_SWI_SIZE,
+            RISCV_ACLINT_DEFAULT_MTIMER_SIZE, base_hartid, hart_count,
+            RISCV_ACLINT_DEFAULT_MTIMECMP, RISCV_ACLINT_DEFAULT_MTIME,
+            RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
+    }
+}
 //类初始化函数
 static void my_board_machine_init(MachineState *machine)
 {
@@ -154,6 +205,10 @@ static void my_board_machine_init(MachineState *machine)
     my_board_memory_create(machine);
     //创建flash
     my_board_flash_create(machine);
+    //创建plic
+    my_board_plic_create(machine);
+    //创建clint
+    my_board_aclint_create(machine);
 }
 //实例初始化函数
 static void my_board_machine_instance_init(Object *obj)

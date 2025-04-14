@@ -24,13 +24,14 @@ struct MyBoardState{
     //板子具备的硬件
     RISCVHartArrayState soc[MY_BOARD_SOCKETS_MAX];
     PFlashCFI01 *flash;
-    
-
+    DeviceState *plic[MY_BOARD_SOCKETS_MAX];
 };
 //硬件编号，为设计板子的硬件地图做准备
 enum{
     MY_BOARD_MROM,
     MY_BOARD_SRAM,
+    MY_BOARD_CLINT,
+    MY_BOARD_PLIC,
     MY_BOARD_UART0,
     MY_BOARD_FLASH,
     MY_BOARD_DRAM,
@@ -40,5 +41,15 @@ enum{
     MY_BOARD_UART0_IRQ = 10,
 
 };
+//PLIC相关定义
+#define MY_BOARD_PLIC_NUM_SOURCES    127          //支持的中断源的最大数量
+#define MY_BOARD_PLIC_NUM_PRIORITIES 7            //支持的中断优先级的数量
+#define MY_BOARD_PLIC_PRIORITY_BASE  0x04         //中断优先级寄存器的基址
+#define MY_BOARD_PLIC_PENDING_BASE   0x1000       //中断挂起寄存器的基址
+#define MY_BOARD_PLIC_ENABLE_BASE    0x2000       //中断使能寄存器的基址
+#define MY_BOARD_PLIC_ENABLE_STRIDE  0x80         //中断使能寄存器之间的地址间隔
+#define MY_BOARD_PLIC_CONTEXT_BASE   0x200000     //上下文保存寄存器的基址
+#define MY_BOARD_PLIC_CONTEXT_STRIDE 0x1000       //上下文保存寄存器之间的地址间隔
+
 
 #endif
