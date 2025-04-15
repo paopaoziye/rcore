@@ -1,0 +1,32 @@
+
+Discarded input sections
+
+ .data          0x0000000000000000        0x0 /home/zfk/Desktop/ccore/output/lowlevelboot/start.o
+ .bss           0x0000000000000000        0x0 /home/zfk/Desktop/ccore/output/lowlevelboot/start.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+flash            0x0000000020000000 0x0000000000080000 axrl!w
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD /home/zfk/Desktop/ccore/output/lowlevelboot/start.o
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/libgcc.a
+START GROUP
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/../../../../riscv64-unknown-elf/lib/libc.a
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/../../../../riscv64-unknown-elf/lib/libgloss.a
+END GROUP
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/libgcc.a
+
+.text           0x0000000020000000       0x2c
+ *(.text)
+ .text          0x0000000020000000       0x2c /home/zfk/Desktop/ccore/output/lowlevelboot/start.o
+                0x0000000020000000                _start
+OUTPUT(/home/zfk/Desktop/ccore/output/lowlevelboot/lowlevel_fw.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x68
+ .riscv.attributes
+                0x0000000000000000       0x68 /home/zfk/Desktop/ccore/output/lowlevelboot/start.o

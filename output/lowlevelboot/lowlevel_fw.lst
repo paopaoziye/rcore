@@ -1,0 +1,24 @@
+
+/home/zfk/Desktop/ccore/output/lowlevelboot/lowlevel_fw.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000020000000 <_start>:
+    20000000:	f1402573          	csrr	a0,mhartid
+    20000004:	4281                	li	t0,0
+    20000006:	00550363          	beq	a0,t0,2000000c <_core0>
+
+000000002000000a <_loop>:
+    2000000a:	a001                	j	2000000a <_loop>
+
+000000002000000c <_core0>:
+    2000000c:	10000293          	li	t0,256
+    20000010:	02d2                	slli	t0,t0,0x14
+    20000012:	04800313          	li	t1,72
+    20000016:	00628023          	sb	t1,0(t0)
+    2000001a:	06900313          	li	t1,105
+    2000001e:	00628023          	sb	t1,0(t0)
+    20000022:	02100313          	li	t1,33
+    20000026:	00628023          	sb	t1,0(t0)
+    2000002a:	b7c5                	j	2000000a <_loop>
