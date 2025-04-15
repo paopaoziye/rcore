@@ -35,7 +35,7 @@ static const MemMapEntry my_board_memmap[] = {
     [MY_BOARD_UART2] = { 0x10002000,         0x100 }, 
     [MY_BOARD_RTC]   = { 0x10003000,        0x1000 },
     [MY_BOARD_FLASH] = { 0x20000000,     0x2000000 }, 
-    [MY_BOARD_DRAM]  = { 0x80000000,          0x80 },   
+    [MY_BOARD_DRAM]  = { 0x80000000,    0x40000000 },   
 };
 //初始化CPU，参考virt_machine_init
 static void my_board_cpu_create(MachineState *machine){
