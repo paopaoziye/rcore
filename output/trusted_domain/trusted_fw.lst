@@ -1,0 +1,21 @@
+
+/home/zfk/Desktop/rcore/output/trusted_domain/trusted_fw.elf:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+00000000b0000000 <_start>:
+    b0000000:	10000293          	li	t0,256
+    b0000004:	02d2                	slli	t0,t0,0x14
+    b0000006:	20000313          	li	t1,512
+    b000000a:	0312                	slli	t1,t1,0x4
+    b000000c:	929a                	add	t0,t0,t1
+    b000000e:	04800313          	li	t1,72
+    b0000012:	00628023          	sb	t1,0(t0)
+    b0000016:	06900313          	li	t1,105
+    b000001a:	00628023          	sb	t1,0(t0)
+    b000001e:	02100313          	li	t1,33
+    b0000022:	00628023          	sb	t1,0(t0)
+
+00000000b0000026 <_loop>:
+    b0000026:	a001                	j	b0000026 <_loop>

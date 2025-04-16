@@ -1,5 +1,5 @@
 
-/home/zfk/Desktop/ccore/output/lowlevelboot/lowlevel_fw.elf:     file format elf64-littleriscv
+/home/zfk/Desktop/rcore/output/lowlevelboot/lowlevel_fw.elf:     file format elf64-littleriscv
 
 
 Disassembly of section .text:
@@ -34,25 +34,39 @@ Disassembly of section .text:
     2000004c:	0511                	addi	a0,a0,4
     2000004e:	0591                	addi	a1,a1,4
     20000050:	fec5eae3          	bltu	a1,a2,20000044 <_start+0x44>
-    20000054:	f1402573          	csrr	a0,mhartid
-    20000058:	4281                	li	t0,0
-    2000005a:	00550e63          	beq	a0,t0,20000076 <_no_wait>
-    2000005e:	6341                	lui	t1,0x10
-    20000060:	337d                	addiw	t1,t1,-1
-    20000062:	6385                	lui	t2,0x1
-    20000064:	0001                	nop
-    20000066:	137d                	addi	t1,t1,-1
-    20000068:	fe031ee3          	bnez	t1,20000064 <_start+0x64>
-    2000006c:	6341                	lui	t1,0x10
-    2000006e:	337d                	addiw	t1,t1,-1
-    20000070:	13fd                	addi	t2,t2,-1
-    20000072:	fe0399e3          	bnez	t2,20000064 <_start+0x64>
+    20000054:	20400513          	li	a0,516
+    20000058:	0552                	slli	a0,a0,0x14
+    2000005a:	6585                	lui	a1,0x1
+    2000005c:	b005859b          	addiw	a1,a1,-1280
+    20000060:	05d2                	slli	a1,a1,0x14
+    20000062:	6605                	lui	a2,0x1
+    20000064:	b046061b          	addiw	a2,a2,-1276
+    20000068:	0652                	slli	a2,a2,0x14
+    2000006a:	00c5fa63          	bgeu	a1,a2,2000007e <_start+0x7e>
+    2000006e:	00052283          	lw	t0,0(a0)
+    20000072:	0055a023          	sw	t0,0(a1) # 1000 <_start-0x1ffff000>
+    20000076:	0511                	addi	a0,a0,4
+    20000078:	0591                	addi	a1,a1,4
+    2000007a:	fec5eae3          	bltu	a1,a2,2000006e <_start+0x6e>
+    2000007e:	f1402573          	csrr	a0,mhartid
+    20000082:	4281                	li	t0,0
+    20000084:	00550e63          	beq	a0,t0,200000a0 <_no_wait>
+    20000088:	6341                	lui	t1,0x10
+    2000008a:	337d                	addiw	t1,t1,-1
+    2000008c:	6385                	lui	t2,0x1
+    2000008e:	0001                	nop
+    20000090:	137d                	addi	t1,t1,-1
+    20000092:	fe031ee3          	bnez	t1,2000008e <_start+0x8e>
+    20000096:	6341                	lui	t1,0x10
+    20000098:	337d                	addiw	t1,t1,-1
+    2000009a:	13fd                	addi	t2,t2,-1
+    2000009c:	fe0399e3          	bnez	t2,2000008e <_start+0x8e>
 
-0000000020000076 <_no_wait>:
-    20000076:	6585                	lui	a1,0x1
-    20000078:	8225859b          	addiw	a1,a1,-2014
-    2000007c:	05d2                	slli	a1,a1,0x14
-    2000007e:	6285                	lui	t0,0x1
-    20000080:	8002829b          	addiw	t0,t0,-2048
-    20000084:	02d2                	slli	t0,t0,0x14
-    20000086:	8282                	jr	t0
+00000000200000a0 <_no_wait>:
+    200000a0:	6585                	lui	a1,0x1
+    200000a2:	8225859b          	addiw	a1,a1,-2014
+    200000a6:	05d2                	slli	a1,a1,0x14
+    200000a8:	6285                	lui	t0,0x1
+    200000aa:	8002829b          	addiw	t0,t0,-2048
+    200000ae:	02d2                	slli	t0,t0,0x14
+    200000b0:	8282                	jr	t0

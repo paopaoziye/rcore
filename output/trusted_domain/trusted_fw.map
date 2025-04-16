@@ -1,0 +1,32 @@
+
+Discarded input sections
+
+ .data          0x0000000000000000        0x0 /home/zfk/Desktop/rcore/output/trusted_domain/startup.o
+ .bss           0x0000000000000000        0x0 /home/zfk/Desktop/rcore/output/trusted_domain/startup.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+ddr              0x00000000b0000000 0x0000000010000000 axrl!w
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD /home/zfk/Desktop/rcore/output/trusted_domain/startup.o
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/libgcc.a
+START GROUP
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/../../../../riscv64-unknown-elf/lib/libc.a
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/../../../../riscv64-unknown-elf/lib/libgloss.a
+END GROUP
+LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/libgcc.a
+
+.text           0x00000000b0000000       0x28
+ *(.text)
+ .text          0x00000000b0000000       0x28 /home/zfk/Desktop/rcore/output/trusted_domain/startup.o
+                0x00000000b0000000                _start
+OUTPUT(/home/zfk/Desktop/rcore/output/trusted_domain/trusted_fw.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x64
+ .riscv.attributes
+                0x0000000000000000       0x64 /home/zfk/Desktop/rcore/output/trusted_domain/startup.o
