@@ -20,9 +20,9 @@ LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0
 END GROUP
 LOAD /home/zfk/my_programs/riscv/riscv/bin/../lib/gcc/riscv64-unknown-elf/13.2.0/libgcc.a
 
-.text           0x0000000020000000       0xb2
+.text           0x0000000020000000       0xdc
  *(.text)
- .text          0x0000000020000000       0xb2 /home/zfk/Desktop/rcore/output/lowlevelboot/start.o
+ .text          0x0000000020000000       0xdc /home/zfk/Desktop/rcore/output/lowlevelboot/start.o
                 0x0000000020000000                _start
 OUTPUT(/home/zfk/Desktop/rcore/output/lowlevelboot/lowlevel_fw.elf elf64-littleriscv)
 

@@ -70,6 +70,16 @@ $CROSS_PREFIX-objcopy -O binary -S $SHELL_FOLDER/output/trusted_domain/trusted_f
 # 生成反汇编文件，方便调试分析
 $CROSS_PREFIX-objdump --source --demangle --disassemble --reloc --wide $SHELL_FOLDER/output/trusted_domain/trusted_fw.elf > $SHELL_FOLDER/output/trusted_domain/trusted_fw.lst
 
+# 编译os
+# 如果没有output/os则创建
+if [ ! -d "$SHELL_FOLDER/output/os" ]; then  
+mkdir $SHELL_FOLDER/output/os
+fi
+# 切换到output/os
+cd $SHELL_FOLDER/os
+make
+cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
+make clean
 
 # 合成firmware固件
 # 如果没有output/fw目录则创建
@@ -90,6 +100,8 @@ dd of=fw.bin bs=1k conv=notrunc seek=512 if=$SHELL_FOLDER/output/opensbi/my_boar
 dd of=fw.bin bs=1k conv=notrunc seek=2k if=$SHELL_FOLDER/output/opensbi/fw_jump.bin
 # 写入trusted_fw.bin，地址偏移量为4MB，因此fw_jump.bin的地址偏移量为0x400000
 dd of=fw.bin bs=1k conv=notrunc seek=4K if=$SHELL_FOLDER/output/trusted_domain/trusted_fw.bin
+# 写入os.bin,地址偏移量为8MB，因此os.bin的地址偏移量为x800000
+dd of=fw.bin bs=1k conv=notrunc seek=8K if=$SHELL_FOLDER/output/os/os.bin
 
 
 
