@@ -1,7 +1,6 @@
 #include "sbi.h"
 #include "stdint.h"
-//调用sbi服务
-//参数分别为EID、FID以及一系列参数
+/* 调用sbi服务，参数分别为EID、FID以及一系列参数 */
 struct sbiret sbi_ecall(int ext, int fid, unsigned long arg0,
 			unsigned long arg1, unsigned long arg2,
 			unsigned long arg3, unsigned long arg4,
@@ -29,13 +28,7 @@ struct sbiret sbi_ecall(int ext, int fid, unsigned long arg0,
 	return ret;
 }
 
-
-/**
- * sbi_console_putchar() - Writes given character to the console device.
- * @ch: The data to be written to the console.
- *
- * Return: None
- */
+/* 通过SBI调用在控制台输出一个字符 */
 void sbi_console_putchar(int ch)
 {
 	sbi_ecall(SBI_EXT_0_1_CONSOLE_PUTCHAR, 0, ch, 0, 0, 0, 0, 0);

@@ -10,12 +10,19 @@ OBJDUMP = ${CROSS_COMPILE}objdump
 
 #汇编源文件列表
 SRCS_ASM = \
-	entry.S
+	entry.S \
+	kerneltrap.S \
+	switch.S \
 #c源文件列表
 SRCS_C = \
 	sbi.c \
 	main.c \
 	printf.c \
+	trap.c \
+	syscall.c \
+	string.c \
+	app.c \
+	task.c \
 
 #将源文件列表转化为对应的目标文件列表，避免手动列出每个.o文件
 OBJS = $(SRCS_ASM:.S=.o)
@@ -24,7 +31,7 @@ OBJS += $(SRCS_C:.c=.o)
 #os.elf的依赖文件为OBJS，只有OBJS中的某个.o文件更新时，才会重新构建os.elf
 #将.o文件编译为os.elf，并基于os.elf生成对应的os.bin
 os.elf: ${OBJS}
-	${CC} ${CFLAGS} -T os.ld  -o os.elf $^
+	${CC} ${CFLAGS} -T os.ld -Wl,-Map=os.map -o os.elf $^
 	${OBJCOPY} -O binary os.elf os.bin
 #将所有的.c、.S文件编译为.o
 %.o : %.c

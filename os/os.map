@@ -1,0 +1,155 @@
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+ram              0x0000000080200000 0x0000000008000000 axrl!w
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD entry.o
+LOAD kerneltrap.o
+LOAD switch.o
+LOAD sbi.o
+LOAD main.o
+LOAD printf.o
+LOAD trap.o
+LOAD syscall.o
+LOAD string.o
+LOAD app.o
+LOAD task.o
+
+.text           0x0000000080200000      0xea4
+ *(.text .text.*)
+ .text          0x0000000080200000        0x0 entry.o
+ .text.entry    0x0000000080200000        0xc entry.o
+                0x0000000080200000                _start
+ *fill*         0x000000008020000c        0x4 
+ .text          0x0000000080200010       0xc6 kerneltrap.o
+                0x0000000080200010                __alltraps
+                0x0000000080200070                __restore
+ .text          0x00000000802000d6       0x6a switch.o
+                0x00000000802000d6                __switch
+ .text          0x0000000080200140       0xb2 sbi.o
+                0x0000000080200140                sbi_ecall
+                0x00000000802001c4                sbi_console_putchar
+ .text          0x00000000802001f2       0x2a main.o
+                0x00000000802001f2                os_main
+ .text          0x000000008020021c      0x572 printf.o
+                0x000000008020021c                uart_puts
+                0x0000000080200708                printf
+                0x0000000080200760                panic
+ .text          0x000000008020078e       0xc8 trap.o
+                0x00000000802007c2                trap_handler
+                0x0000000080200836                trap_init
+ .text          0x0000000080200856       0xbc syscall.o
+                0x0000000080200856                __SYSCALL
+                0x00000000802008be                __sys_write
+                0x00000000802008fc                __sys_yield
+ .text          0x0000000080200912       0x92 string.o
+                0x0000000080200912                strlen
+                0x000000008020094e                memcpy
+ .text          0x00000000802009a4       0x9c app.o
+                0x00000000802009a4                syscall
+                0x00000000802009e8                sys_write
+                0x0000000080200a1e                sys_yield
+ .text          0x0000000080200a40      0x464 task.o
+                0x0000000080200a74                tcx_init
+                0x0000000080200aec                task_create
+                0x0000000080200c1e                schedule
+                0x0000000080200d22                task_delay
+                0x0000000080200d64                run_first_task
+                0x0000000080200da8                task1
+                0x0000000080200dea                task2
+                0x0000000080200e2c                task3
+                0x0000000080200e6e                task_init
+
+.rodata         0x0000000080200ea8      0x1a3
+ *(.rodata .rodata.*)
+ .rodata        0x0000000080200ea8       0x10 main.o
+ .rodata        0x0000000080200eb8       0x8a printf.o
+ *fill*         0x0000000080200f42        0x6 
+ .rodata        0x0000000080200f48       0x14 trap.o
+ *fill*         0x0000000080200f5c        0x4 
+ .rodata        0x0000000080200f60       0x3d syscall.o
+ *fill*         0x0000000080200f9d        0x3 
+ .rodata        0x0000000080200fa0       0xab task.o
+
+.data           0x000000008020104b      0xfb5
+                0x0000000080202000                . = ALIGN (0x1000)
+ *fill*         0x000000008020104b      0xfb5 
+ *(.sdata .sdata.*)
+ *(.data .data.*)
+ .data          0x0000000080202000        0x0 entry.o
+ .data          0x0000000080202000        0x0 kerneltrap.o
+ .data          0x0000000080202000        0x0 switch.o
+ .data          0x0000000080202000        0x0 sbi.o
+ .data          0x0000000080202000        0x0 main.o
+ .data          0x0000000080202000        0x0 printf.o
+ .data          0x0000000080202000        0x0 trap.o
+ .data          0x0000000080202000        0x0 syscall.o
+ .data          0x0000000080202000        0x0 string.o
+ .data          0x0000000080202000        0x0 app.o
+ .data          0x0000000080202000        0x0 task.o
+                [!provide]                        PROVIDE (_data_end = .)
+
+.bss            0x0000000080202000    0x388a0
+ *(.sbss .sbss.*)
+ *(.bss .bss.*)
+ .bss           0x0000000080202000        0x0 entry.o
+ .bss.stack     0x0000000080202000    0x10000 entry.o
+                0x0000000080202000                boot_stack_lower_bound
+                0x0000000080212000                boot_stack_top
+ .bss           0x0000000080212000        0x0 kerneltrap.o
+ .bss           0x0000000080212000        0x0 switch.o
+ .bss           0x0000000080212000        0x0 sbi.o
+ .bss           0x0000000080212000        0x0 main.o
+ .bss           0x0000000080212000      0x3e8 printf.o
+ .bss           0x00000000802123e8        0x0 trap.o
+ .bss           0x00000000802123e8        0x0 syscall.o
+ .bss           0x00000000802123e8        0x0 string.o
+ .bss           0x00000000802123e8        0x0 app.o
+ .bss           0x00000000802123e8    0x284b8 task.o
+                0x00000000802123e8                KernelStack
+                0x00000000802263e8                UserStack
+                0x000000008023a3e8                tasks
+ *(COMMON)
+OUTPUT(os.elf elf64-littleriscv)
+
+.riscv.attributes
+                0x0000000000000000       0x6a
+ .riscv.attributes
+                0x0000000000000000       0x64 entry.o
+ .riscv.attributes
+                0x0000000000000064       0x68 kerneltrap.o
+ .riscv.attributes
+                0x00000000000000cc       0x64 switch.o
+ .riscv.attributes
+                0x0000000000000130       0x66 sbi.o
+ .riscv.attributes
+                0x0000000000000196       0x66 main.o
+ .riscv.attributes
+                0x00000000000001fc       0x66 printf.o
+ .riscv.attributes
+                0x0000000000000262       0x6a trap.o
+ .riscv.attributes
+                0x00000000000002cc       0x66 syscall.o
+ .riscv.attributes
+                0x0000000000000332       0x66 string.o
+ .riscv.attributes
+                0x0000000000000398       0x66 app.o
+ .riscv.attributes
+                0x00000000000003fe       0x6a task.o
+
+.comment        0x0000000000000000        0xf
+ .comment       0x0000000000000000        0xf sbi.o
+                                         0x10 (size before relaxing)
+ .comment       0x000000000000000f       0x10 main.o
+ .comment       0x000000000000000f       0x10 printf.o
+ .comment       0x000000000000000f       0x10 trap.o
+ .comment       0x000000000000000f       0x10 syscall.o
+ .comment       0x000000000000000f       0x10 string.o
+ .comment       0x000000000000000f       0x10 app.o
+ .comment       0x000000000000000f       0x10 task.o

@@ -1,12 +1,14 @@
 #include "os.h"
-//逐个输出字符串
+//输出缓冲区
+static char out_buf[1000];
+/* 逐步输出字符串 */
 void uart_puts(char *s)
 {
 	while (*s) {
 		sbi_console_putchar(*s++);
 	}
 }
-//将格式化后的s输入到out中，并计算格式化后的s的长度
+/* 将格式化后的s输入到out中，并计算格式化后的s的长度 */
 static int _vsnprintf(char * out, size_t n, const char* s, va_list vl)
 {
 	int format = 0;
@@ -115,9 +117,7 @@ static int _vsnprintf(char * out, size_t n, const char* s, va_list vl)
 	}
 	return pos;
 }
-//输出缓冲区
-static char out_buf[1000];
-//计算格式化后s的长度，并通过_vsnprintf将字符串格式化到out_buf中，最后通过uart_puts输出
+/*计算格式化后s的长度，并通过_vsnprintf将字符串格式化到out_buf中，最后通过uart_puts输出 */
 static int _vprintf(const char* s, va_list vl)
 {
 	int res = _vsnprintf(NULL, -1, s, vl);
@@ -129,7 +129,7 @@ static int _vprintf(const char* s, va_list vl)
 	uart_puts(out_buf);
 	return res;
 }
-//将第一个参数s的实际值以及其指针传递给_vprintf，并返回s的长度
+/* 将第一个参数s的实际值以及其指针传递给_vprintf，并返回s的长度 */
 int printf(const char* s, ...)
 {
 	int res = 0;
@@ -139,7 +139,7 @@ int printf(const char* s, ...)
 	va_end(vl);
 	return res;
 }
-//发出错误警告
+/* 发出错误警告 */
 void panic(char *s)
 {
 	printf("panic: ");
