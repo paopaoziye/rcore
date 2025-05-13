@@ -1,6 +1,4 @@
 #include "os.h"
-#include "context.h"
-#include "riscv.h"
 
 /* 异常/中断处理函数，根据 scause 寄存器的值进行不同的处理 */
 TrapContext* trap_handler(TrapContext* cx)

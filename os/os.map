@@ -23,8 +23,11 @@ LOAD task.o
 LOAD timer.o
 LOAD printf.o
 LOAD vsprintf.o
+LOAD address.o
+LOAD alloc.o
+LOAD stack.o
 
-.text           0x0000000080200000     0x1130
+.text           0x0000000080200000     0x17a0
  *(.text .text.*)
  .text          0x0000000080200000        0x0 entry.o
  .text.entry    0x0000000080200000        0xc entry.o
@@ -39,63 +42,93 @@ LOAD vsprintf.o
                 0x0000000080200140                sbi_ecall
                 0x00000000802001c4                sbi_console_putchar
                 0x00000000802001f2                sbi_set_timer
- .text          0x0000000080200224       0x2e main.o
+ .text          0x0000000080200224       0x1a main.o
                 0x0000000080200224                os_main
- .text          0x0000000080200252      0x142 printk.o
-                0x0000000080200252                uart_puts
-                0x000000008020030e                printk
-                0x0000000080200366                panic
- .text          0x0000000080200394      0x10c trap.o
-                0x00000000802003c8                trap_handler
-                0x0000000080200480                trap_init
- .text          0x00000000802004a0       0xf4 syscall.o
-                0x00000000802004a0                __SYSCALL
-                0x0000000080200528                __sys_write
-                0x0000000080200566                __sys_yield
-                0x000000008020057c                __sys_gettime
- .text          0x0000000080200594       0x92 string.o
-                0x0000000080200594                strlen
-                0x00000000802005d0                memcpy
- .text          0x0000000080200626       0xbe app.o
-                0x0000000080200626                syscall
-                0x000000008020066a                sys_write
-                0x00000000802006a0                sys_yield
-                0x00000000802006c2                sys_gettime
- .text          0x00000000802006e4      0x43a task.o
-                0x0000000080200718                tcx_init
-                0x0000000080200790                task_create
-                0x00000000802008c2                schedule
-                0x00000000802009c6                task_delay
-                0x0000000080200a08                run_first_task
-                0x0000000080200a4c                task1
-                0x0000000080200a80                task2
-                0x0000000080200ab4                task3
-                0x0000000080200ae8                task_init
- .text          0x0000000080200b1e      0x120 timer.o
-                0x0000000080200ba0                set_next_trigger
-                0x0000000080200bc6                timer_init
-                0x0000000080200c14                get_time_us
- .text          0x0000000080200c3e       0xc2 printf.o
-                0x0000000080200ca8                printf
- .text          0x0000000080200d00      0x430 vsprintf.o
-                0x0000000080200d00                _vsnprintf
+ .text          0x000000008020023e      0x142 printk.o
+                0x000000008020023e                uart_puts
+                0x00000000802002fa                printk
+                0x0000000080200352                panic
+ .text          0x0000000080200380      0x10c trap.o
+                0x00000000802003b4                trap_handler
+                0x000000008020046c                trap_init
+ .text          0x000000008020048c       0xf4 syscall.o
+                0x000000008020048c                __SYSCALL
+                0x0000000080200514                __sys_write
+                0x0000000080200552                __sys_yield
+                0x0000000080200568                __sys_gettime
+ .text          0x0000000080200580       0xe2 string.o
+                0x0000000080200580                strlen
+                0x00000000802005bc                memcpy
+                0x0000000080200612                memset
+ .text          0x0000000080200662       0xbe app.o
+                0x0000000080200662                syscall
+                0x00000000802006a6                sys_write
+                0x00000000802006dc                sys_yield
+                0x00000000802006fe                sys_gettime
+ .text          0x0000000080200720      0x43a task.o
+                0x0000000080200754                tcx_init
+                0x00000000802007cc                task_create
+                0x00000000802008fe                schedule
+                0x0000000080200a02                task_delay
+                0x0000000080200a44                run_first_task
+                0x0000000080200a88                task1
+                0x0000000080200abc                task2
+                0x0000000080200af0                task3
+                0x0000000080200b24                task_init
+ .text          0x0000000080200b5a      0x120 timer.o
+                0x0000000080200bdc                set_next_trigger
+                0x0000000080200c02                timer_init
+                0x0000000080200c50                get_time_us
+ .text          0x0000000080200c7a       0xc2 printf.o
+                0x0000000080200ce4                printf
+ .text          0x0000000080200d3c      0x430 vsprintf.o
+                0x0000000080200d3c                _vsnprintf
+ .text          0x000000008020116c      0x188 address.o
+                0x000000008020116c                phys_addr_from_size_t
+                0x0000000080201190                phys_page_num_from_size_t
+                0x00000000802011b4                size_t_from_phys_addr
+                0x00000000802011ca                size_t_from_phys_page_num
+                0x00000000802011e0                phys_addr_from_phys_page_num
+                0x0000000080201200                virt_addr_from_size_t
+                0x0000000080201224                virt_page_num_from_size_t
+                0x000000008020124a                size_t_from_virt_addr
+                0x0000000080201278                size_t_from_virt_page_num
+                0x000000008020128e                virt_page_num_from_virt_addr
+                0x00000000802012ae                floor_phys
+                0x00000000802012ce                ceil_phys
+ .text          0x00000000802012f4      0x31e alloc.o
+                0x00000000802012f4                StackFrameAllocator_init
+                0x0000000080201332                StackFrameAllocator_alloc
+                0x00000000802013b6                StackFrameAllocator_dealloc
+                0x0000000080201458                frame_allocator_test
+ .text          0x0000000080201612      0x18e stack.o
+                0x0000000080201612                initStack
+                0x0000000080201632                isEmpty
+                0x0000000080201660                isFull
+                0x0000000080201692                push
+                0x00000000802016fc                pop
+                0x0000000080201758                top
 
-.rodata         0x0000000080201130      0x1cc
+.rodata         0x00000000802017a0      0x290
  *(.rodata .rodata.*)
- .rodata        0x0000000080201130       0x10 main.o
- .rodata        0x0000000080201140       0x32 printk.o
- *fill*         0x0000000080201172        0x6 
- .rodata        0x0000000080201178       0x3e trap.o
- *fill*         0x00000000802011b6        0x2 
- .rodata        0x00000000802011b8       0x3d syscall.o
- *fill*         0x00000000802011f5        0x3 
- .rodata        0x00000000802011f8       0xab task.o
- *fill*         0x00000000802012a3        0x1 
- .rodata        0x00000000802012a4       0x58 vsprintf.o
+ .rodata        0x00000000802017a0       0x10 main.o
+ .rodata        0x00000000802017b0       0x32 printk.o
+ *fill*         0x00000000802017e2        0x6 
+ .rodata        0x00000000802017e8       0x3e trap.o
+ *fill*         0x0000000080201826        0x2 
+ .rodata        0x0000000080201828       0x3d syscall.o
+ *fill*         0x0000000080201865        0x3 
+ .rodata        0x0000000080201868       0xab task.o
+ *fill*         0x0000000080201913        0x1 
+ .rodata        0x0000000080201914       0x58 vsprintf.o
+ *fill*         0x000000008020196c        0x4 
+ .rodata        0x0000000080201970       0x83 alloc.o
+ *fill*         0x00000000802019f3        0x5 
+ .rodata        0x00000000802019f8       0x38 stack.o
 
-.data           0x00000000802012fc      0xd04
+.data           0x0000000080201a30      0x5d0
                 0x0000000080202000                . = ALIGN (0x1000)
- *fill*         0x00000000802012fc      0xd04 
+ *fill*         0x0000000080201a30      0x5d0 
  *(.sdata .sdata.*)
  *(.data .data.*)
  .data          0x0000000080202000        0x0 entry.o
@@ -112,9 +145,12 @@ LOAD vsprintf.o
  .data          0x0000000080202000        0x0 timer.o
  .data          0x0000000080202000        0x0 printf.o
  .data          0x0000000080202000        0x0 vsprintf.o
+ .data          0x0000000080202000        0x0 address.o
+ .data          0x0000000080202000        0x0 alloc.o
+ .data          0x0000000080202000        0x0 stack.o
                 [!provide]                        PROVIDE (_data_end = .)
 
-.bss            0x0000000080202000    0x38c88
+.bss            0x0000000080202000    0x4c520
  *(.sbss .sbss.*)
  *(.bss .bss.*)
  .bss           0x0000000080202000        0x0 entry.o
@@ -137,6 +173,9 @@ LOAD vsprintf.o
  .bss           0x000000008023a8a0        0x0 timer.o
  .bss           0x000000008023a8a0      0x3e8 printf.o
  .bss           0x000000008023ac88        0x0 vsprintf.o
+ .bss           0x000000008023ac88        0x0 address.o
+ .bss           0x000000008023ac88    0x13898 alloc.o
+ .bss           0x000000008024e520        0x0 stack.o
  *(COMMON)
 OUTPUT(os.elf elf64-littleriscv)
 
@@ -170,6 +209,12 @@ OUTPUT(os.elf elf64-littleriscv)
                 0x00000000000004d2       0x66 printf.o
  .riscv.attributes
                 0x0000000000000538       0x66 vsprintf.o
+ .riscv.attributes
+                0x000000000000059e       0x66 address.o
+ .riscv.attributes
+                0x0000000000000604       0x66 alloc.o
+ .riscv.attributes
+                0x000000000000066a       0x66 stack.o
 
 .comment        0x0000000000000000        0xf
  .comment       0x0000000000000000        0xf sbi.o
@@ -184,3 +229,6 @@ OUTPUT(os.elf elf64-littleriscv)
  .comment       0x000000000000000f       0x10 timer.o
  .comment       0x000000000000000f       0x10 printf.o
  .comment       0x000000000000000f       0x10 vsprintf.o
+ .comment       0x000000000000000f       0x10 address.o
+ .comment       0x000000000000000f       0x10 alloc.o
+ .comment       0x000000000000000f       0x10 stack.o

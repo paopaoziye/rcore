@@ -26,6 +26,9 @@ SRCS_C = \
 	timer.c \
 	printf.c \
 	vsprintf.c \
+	address.c \
+	alloc.c \
+	stack.c\
 
 #相关路径
 INCLUDE:=-I./include/os

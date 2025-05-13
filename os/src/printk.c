@@ -1,4 +1,3 @@
-#include "os.h"
 #include "stdio.h"
 //输出缓冲区
 static char out_buf[1000];

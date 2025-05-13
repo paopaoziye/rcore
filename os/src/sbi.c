@@ -1,5 +1,5 @@
 #include "sbi.h"
-#include "stdint.h"
+
 /* 调用sbi服务，参数分别为EID、FID以及一系列参数 */
 struct sbiret sbi_ecall(int ext, int fid, unsigned long arg0,
 			unsigned long arg1, unsigned long arg2,

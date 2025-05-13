@@ -10,4 +10,10 @@ typedef unsigned long long uint64_t;
 //riscv64寄存器变量
 typedef uint64_t reg_t;
 
+#ifndef __cplusplus
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+
 #endif

@@ -1,6 +1,4 @@
-#include "os.h"
-//定义字符串的终止符
-#define EOS '\0'
+#include "string.h"
 /* 计算字符串的长度 */
 size_t strlen(const char* str){
     char *ptr = (char *)str;
@@ -14,6 +12,14 @@ void* memcpy(void* dest,const void *src,size_t count){
     char *ptr = dest;
     while(count--){
         *ptr++ = *((char*)(src++));
+    }
+    return dest;
+}
+/* 将count个字符ch填充到dest起始处 */
+void* memset(void *dest,int ch,size_t count){
+    char *ptr = dest;
+    while(count--){
+        *ptr++ = ch;
     }
     return dest;
 }

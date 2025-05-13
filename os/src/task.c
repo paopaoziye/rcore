@@ -1,5 +1,4 @@
-#include "os.h"
-
+#include "task.h"
 //用户栈、内核栈大小以及任务最大数量
 #define USER_STACK_SIZE (4096 * 2)
 #define KERNEL_STACK_SIZE (4096 * 2)

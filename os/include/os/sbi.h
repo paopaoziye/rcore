@@ -1,6 +1,6 @@
 #ifndef OS_SBI_H__
 #define OS_SBI_H__
-
+#include "stdint.h"
 // sbi调用名和EID的映射
 enum sbi_ext_id {
 	SBI_EXT_0_1_SET_TIMER = 0x0,

@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "os.h": "c",
+        "string.h": "c",
+        "alloc.h": "c",
+        "stdint.h": "c",
+        "sbi.h": "c",
+        "address.h": "c",
+        "stack.h": "c"
+    }
+}
