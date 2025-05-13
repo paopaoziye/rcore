@@ -24,5 +24,9 @@ size_t sys_write(size_t fd, const char* buf, size_t len){
 size_t sys_yield(){
     syscall(__NR_sched_yield,0,0,0);
 }
+uint64_t sys_gettime()
+{
+    return syscall(__NR_gettimeofday,0,0,0);
+}
 
 

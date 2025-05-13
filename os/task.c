@@ -60,7 +60,7 @@ void task_create(void (*task_entry)(void))
         _top++;
 
     }else{
-        printf("Too many tasks!!!");   
+        printf("Too many tasks!!!\n");   
     }
     
 }
@@ -106,8 +106,6 @@ void task1(){
     int len = strlen(message);
     while (1){
         sys_write(1,message, len);
-        task_delay(10000);
-        sys_yield();
     }
 }
 
@@ -116,8 +114,6 @@ void task2(){
     int len = strlen(message);
     while (1){
         sys_write(1,message, len);
-        task_delay(10000);
-        sys_yield();
     }
 }
 
@@ -126,8 +122,6 @@ void task3(){
     int len = strlen(message);
     while (1){
         sys_write(1,message, len);
-        task_delay(10000);
-        sys_yield();
     }
 }
 

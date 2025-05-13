@@ -14,9 +14,10 @@ extern int  printf(const char* s, ...);
 extern void panic(char *s);
 extern void sbi_console_putchar(int ch);
 //系统调用相关
-extern void __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3);
+extern uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3);
 #define __NR_write 64
 #define __NR_sched_yield 124
+#define __NR_gettimeofday 169
 /* kerneltrap.S*/
 extern void __alltraps(void);
 extern void __restore(pt_regs *next);
@@ -34,4 +35,11 @@ extern void trap_init(void);
 /* app.c */
 extern size_t sys_write(size_t fd, const char* buf, size_t len);
 extern size_t sys_yield();
+/* timer.c */
+extern void timer_init(void);
+extern void set_next_trigger(void);
+extern uint64_t get_time_us(void);
+/* sbi.c */
+extern void sbi_set_timer(uint64_t stime_value);
+extern void sbi_console_putchar(int ch);
 #endif

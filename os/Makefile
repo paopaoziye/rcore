@@ -23,6 +23,7 @@ SRCS_C = \
 	string.c \
 	app.c \
 	task.c \
+	timer.c \
 
 #将源文件列表转化为对应的目标文件列表，避免手动列出每个.o文件
 OBJS = $(SRCS_ASM:.S=.o)

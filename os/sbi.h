@@ -20,7 +20,10 @@ enum sbi_ext_id {
 	SBI_EXT_SRST = 0x53525354,
 	SBI_EXT_PMU = 0x504D55,
 };
-
+enum sbi_ext_time_fid {
+	SBI_EXT_TIME_SET_TIMER = 0,
+};
+#define SBI_FID_SET_TIMER		SBI_EXT_TIME_SET_TIMER
 // sbi返回结构体
 struct sbiret {
 	long error;
