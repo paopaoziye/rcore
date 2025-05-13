@@ -17,14 +17,20 @@ SRCS_ASM = \
 SRCS_C = \
 	sbi.c \
 	main.c \
-	printf.c \
+	printk.c \
 	trap.c \
 	syscall.c \
 	string.c \
 	app.c \
 	task.c \
 	timer.c \
+	printf.c \
+	vsprintf.c \
 
+#相关路径
+INCLUDE:=-I./include/os
+SRC:=./src
+LIB:=./lib
 #将源文件列表转化为对应的目标文件列表，避免手动列出每个.o文件
 OBJS = $(SRCS_ASM:.S=.o)
 OBJS += $(SRCS_C:.c=.o)
@@ -34,12 +40,15 @@ OBJS += $(SRCS_C:.c=.o)
 os.elf: ${OBJS}
 	${CC} ${CFLAGS} -T os.ld -Wl,-Map=os.map -o os.elf $^
 	${OBJCOPY} -O binary os.elf os.bin
-#将所有的.c、.S文件编译为.o
-%.o : %.c
-	${CC} ${CFLAGS} -c -o $@ $<
+#将所有的.c、.S文件编译为.o，指定头文件路径
+%.o : $(SRC)/%.c
+	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
 
-%.o : %.S
-	${CC} ${CFLAGS} -c -o $@ $<
+%.o : $(LIB)/%.c
+	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
+
+%.o : $(SRC)/%.S
+	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
 
 #声明clean不是一个真实的目标文件，而是一个抽象的操作命令
 #删除当前目录下所有.o、.bin和 .elf文件
