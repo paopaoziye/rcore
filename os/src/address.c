@@ -1,5 +1,8 @@
 #include "address.h"
+#include "alloc.h"
 
+//内核页表
+PageTable kernel_pagetable;
 /* 从一个uint64_t中提取物理地址 */
 PhysAddr phys_addr_from_size_t(uint64_t v){
     PhysAddr addr;
@@ -70,4 +73,170 @@ PhysPageNum ceil_phys(PhysAddr phys_addr){
     phys_page_num.value = (phys_addr.value + PAGE_SIZE - 1) / PAGE_SIZE;
     return phys_page_num;
 }
+/* 虚拟地址向下取整 */
+VirtPageNum floor_virts(VirtAddr virt_addr){
+    VirtPageNum virt_page_num;
+    virt_page_num.value = virt_addr.value / PAGE_SIZE;
+    return virt_page_num;
+}
+/* 新建一个页表项 */
+PageTableEntry PageTableEntry_new(PhysPageNum ppn, uint8_t PTEFlags){
+    PageTableEntry entry;
+    entry.bits = (ppn.value << 10) | PTEFlags;
+    return entry;
+}
+/* 创建空页表项 */
+PageTableEntry PageTableEntry_empty(){
+    PageTableEntry entry;
+    entry.bits = 0;
+    return entry;
+}
+/* 获取页表项的物理页号 */
+PhysPageNum PageTableEntry_ppn(PageTableEntry *entry){
+    PhysPageNum ppn;
+    ppn.value = (entry->bits >> 10) & ((1ul << 44) - 1);
+    return ppn;
+}
+/* 获取页表项的标志位 */
+uint8_t PageTableEntry_flags(PageTableEntry *entry){
+    return entry->bits & 0xFF;
+}
+/* 判断页表项是否为空 */
+bool PageTableEntry_is_valid(PageTableEntry *entry){
+    uint8_t entryFlags = PageTableEntry_flags(entry);
+    return (entryFlags & PTE_V) != 0;
+}
 
+/* 将物理页号转换为以字节为单位的物理地址 */
+uint8_t* get_bytes_array(PhysPageNum ppn){
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    return (uint8_t*) addr.value;
+}
+/* 将物理页号转换为以页表项为单位的物理地址 */
+PageTableEntry* get_pte_array(PhysPageNum ppn){
+    PhysAddr addr = phys_addr_from_phys_page_num(ppn);
+    return (PageTableEntry*) addr.value;
+}
+
+/* 从虚拟页号中提取三级页号索引，按照从高到低的顺序返回 */
+void indexes_from_vpn(VirtPageNum vpn,size_t* result){
+    size_t idx[3];
+    for(int i = 2;i >= 0;i--){
+        //提取vpn的低9位并将其右移9位
+        idx[i] = vpn.value & 0x1ff;
+        vpn.value >>= 9;
+    }
+    for (int i = 0; i < 3; i++) {
+        result[i] = idx[i];
+    }
+}
+
+/* 查找并填充页表项 */
+PageTableEntry* find_pte_create(PageTable* pt,VirtPageNum vpn){
+    //虚拟页号三级索引
+    size_t idx[3];
+    indexes_from_vpn(vpn,idx);
+    //提取页表根节点
+    PhysPageNum ppn = pt->root_ppn;
+    //提取各级页表项，如果没有pte，则分配一页内存并创建
+    for(int i = 0;i < 3;i++){
+        //提取页表项
+        PageTableEntry* pte = &get_pte_array(ppn)[idx[i]];
+        if(i == 2){
+            return pte;
+        }
+        //如果页表项为空，则分配一个新的物理页并新建一个页表项
+        if(!PageTableEntry_is_valid(pte)){
+            PhysPageNum frame = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+            *pte = PageTableEntry_new(frame,PTE_V);
+        }
+        //更新页表为下一级页表
+        ppn = PageTableEntry_ppn(pte);
+    }
+}
+/* 查找页表项 */
+PageTableEntry* find_pte(PageTable* pt,VirtPageNum vpn){
+    //虚拟页号三级索引
+    size_t idx[3];
+    indexes_from_vpn(vpn,idx);
+    //提取页表根节点
+    PhysPageNum ppn = pt->root_ppn;
+    //提取各级页表项，如果没有pte，则分配一页内存并创建
+    for(int i = 0;i < 3;i++){
+        //提取页表项
+        PageTableEntry* pte = &get_pte_array(ppn)[idx[i]];
+        if(i == 2){
+            return pte;
+        }
+        //如果页表项为空，则分配一个新的物理页并新建一个页表项
+        if(!PageTableEntry_is_valid(pte)){
+            return NULL;
+        }
+        //更新页表为下一级页表
+        ppn = PageTableEntry_ppn(pte);
+    }
+}
+/* 建立虚拟地址和物理地址的映射 */
+void PageTable_map(PageTable* pt,VirtAddr va, PhysAddr pa, uint64_t size ,uint8_t pteflgs){
+    if(size == 0)
+        panic("mappages:size");
+    //向下取整需要映射虚拟地址和物理地址，获取其页号
+    PhysPageNum ppn = floor_phys(pa);
+    VirtPageNum vpn = floor_virts(va);  
+    //获取标志映射结束的虚拟页号
+    uint64_t last =  (va.value + size - 1) / PAGE_SIZE;
+    for(;;){
+        //找到va对应的页表项，并确保其三级页表项为空，从而创建三级页表项完成映射
+        PageTableEntry* pte = find_pte_create(pt,vpn);
+        assert(!PageTableEntry_is_valid(pte));
+        *pte = PageTableEntry_new(ppn,PTE_V | pteflgs);
+
+        if( vpn.value == last )
+            break;
+        
+        vpn.value += 1;
+        ppn.value += 1;
+    }
+}
+/* 取消映射 */
+void PageTable_unmap(PageTable* pt, VirtPageNum vpn){
+    //清空对应三级页表项
+    PageTableEntry* pte = find_pte(pt,vpn);
+    assert(!PageTableEntry_is_valid(pte));
+    *pte = PageTableEntry_empty();
+}
+/* 内核虚拟内存映射，采用恒等内存映射 */
+PageTable kvmmake(void){
+    //创建页表根节点并打印其物理地址
+    PageTable pt;
+    PhysPageNum root_ppn =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    pt.root_ppn = root_ppn;
+    printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
+    //映射内核代码段并打印其结束地址，其权限为可执行和只读
+    printk("etext:%p\n",(uint64_t)etext);
+    PageTable_map(&pt,virt_addr_from_size_t(KERNBASE),phys_addr_from_size_t(KERNBASE), \
+                    (uint64_t)etext-KERNBASE , PTE_R | PTE_X ) ;
+    printk("finish kernel text map!\n");
+    //映射内核数据段和RAM，其权限为可读写
+    PageTable_map(&pt,virt_addr_from_size_t((uint64_t)etext),phys_addr_from_size_t((uint64_t)etext ), \
+                    PHYSTOP - (uint64_t)etext , PTE_R | PTE_W ) ;
+    printk("finish kernel data and physical RAM map!\n");
+    return pt;
+}
+/* 创建内核页表 */
+void kvminit(){
+  kernel_pagetable = kvmmake();
+}
+/* 开启分页模式并将内核页表写入satp寄存器 */
+void kvminithart(){
+  //构造riscv的 satp 寄存器值
+  printk("satp:%lx\n",MAKE_SATP(kernel_pagetable.root_ppn.value));
+  sfence_vma();
+  //将上述构造的 satp 寄存器值写入 satp 寄存器
+  w_satp(MAKE_SATP(kernel_pagetable.root_ppn.value));
+  //刷新TLB
+  sfence_vma();
+  //打印当前satp寄存器的值
+  reg_t satp = r_satp();
+  printk("satp:%lx\n",satp);
+}

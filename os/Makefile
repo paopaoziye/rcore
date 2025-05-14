@@ -29,6 +29,7 @@ SRCS_C = \
 	address.c \
 	alloc.c \
 	stack.c\
+	assert.c\
 
 #相关路径
 INCLUDE:=-I./include/os

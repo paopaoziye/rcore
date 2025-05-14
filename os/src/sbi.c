@@ -36,6 +36,7 @@ void sbi_console_putchar(int ch)
 /* 设置 mtimecmp 寄存器的值 */
 void sbi_set_timer(uint64_t stime_value)
 {
+	
 	sbi_ecall(SBI_EXT_TIME, SBI_FID_SET_TIMER, stime_value,
 		  0, 0, 0, 0, 0);
 }

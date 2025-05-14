@@ -14,6 +14,7 @@ typedef struct
 void StackFrameAllocator_init(StackFrameAllocator* allocator,PhysPageNum l,PhysPageNum r);
 PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator);
 void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn);
-void frame_allocator_test();
-
+void frame_alloctor_init();
+//内存分配器
+extern StackFrameAllocator FrameAllocatorImpl;
 #endif

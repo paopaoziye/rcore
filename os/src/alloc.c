@@ -1,5 +1,6 @@
 #include "alloc.h"
-
+#include "address.h"
+StackFrameAllocator FrameAllocatorImpl;
 /* 初始化内存分配器,其中[current,end)为可分配物理页号空间 */
 void StackFrameAllocator_init(StackFrameAllocator* allocator,PhysPageNum l,PhysPageNum r){
     allocator->current = l.value;
@@ -44,29 +45,13 @@ void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn
     //回收物理内存页号
     push(&(allocator->recycled), ppnValue);
 }
-static StackFrameAllocator FrameAllocatorImpl;
-void frame_allocator_test(){
+
+/* 初始化可用内存 */
+void frame_alloctor_init(){
+    //初始化时 kernelend 需向上取整
     StackFrameAllocator_init(&FrameAllocatorImpl, \
-            floor_phys(phys_addr_from_size_t(MEMORY_START)), \
-            ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-    printk("Memoery start:%d\n",floor_phys(phys_addr_from_size_t(MEMORY_START)));
-    printk("Memoery end:%d\n",ceil_phys(phys_addr_from_size_t(MEMORY_END)));
-    PhysPageNum frame[10];
-    for (size_t i = 0; i < 5; i++)
-    {
-         frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-         printk("frame id:%d\n",frame[i].value);
-    }
-    for (size_t i = 0; i < 5; i++)
-    {
-         StackFrameAllocator_dealloc(&FrameAllocatorImpl,frame[i]);
-         printk("allocator->recycled.data.value:%d\n",FrameAllocatorImpl.recycled.data[i]);
-         printk("frame id:%d\n",frame[i].value);
-     }
-     PhysPageNum frame_test[10];
-     for (size_t i = 0; i < 5; i++)
-     {
-          frame[i] = StackFrameAllocator_alloc(&FrameAllocatorImpl);
-         printk("frame id:%d\n",frame[i].value);
-     }
+            ceil_phys(phys_addr_from_size_t((uint64_t)kernelend)), \
+            ceil_phys(phys_addr_from_size_t(PHYSTOP)));
+    printk("Memoery start:%p\n",kernelend);
+    printk("Memoery end:%p\n",PHYSTOP);
 }

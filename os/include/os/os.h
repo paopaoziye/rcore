@@ -9,6 +9,7 @@
 #include "riscv.h"
 #include "task.h"
 #include "address.h"
+#include "assert.h"
 
 #include "stdio.h"
 #include "stack.h"
