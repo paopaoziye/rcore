@@ -1,8 +1,10 @@
 #ifndef OS_ADDRESS_H
 #define OS_ADDRESS_H
-#include "os.h"
+#include "types.h"
 
-
+extern uint64_t kernel_satp;
+#define PGROUNDUP(sz)  (((sz)+PAGE_SIZE-1) & ~(PAGE_SIZE-1))
+#define PGROUNDDOWN(a) (((a)) & ~(PAGE_SIZE-1))
 //相关宏定义
 #define PAGE_SIZE 0x1000      //页的大小即4KB  
 #define PAGE_SIZE_BITS   0xc  //页内偏移地址长度即12位   
@@ -17,7 +19,13 @@
 extern char etext[];                        //内核代码段尾部地址
 extern char kernelend[];                    //内核数据段尾部地址
 #define PHYSTOP (KERNBASE + 128*1024*1024)  //内核空余空间尾部地址
-
+#define MAXVA (1L << (9 + 9 + 9 + 12 - 1))  //Sv39的最大地址空间 512G
+#define TRAMPOLINE (MAXVA - PAGE_SIZE)      //跳板页开始位置
+extern char trampoline[];                   //跳板页物理地址
+#define TRAPFRAME (TRAMPOLINE - PAGE_SIZE)  //Trap页开始位置
+//计算应用内核栈的地址，每个应用的内核栈下都有一个无效的守卫页
+#define KSTACK(p) (TRAMPOLINE - ((p)+1)* 2*PAGE_SIZE)
+#define MAKE_PAGETABLE(satp) ( satp & (SATP_SV39 - 1) )
 /* 物理地址 */
 typedef struct {
     uint64_t value; 
@@ -57,7 +65,7 @@ typedef struct {
 #define PTE_A (1 << 6)   //访问标志位
 #define PTE_D (1 << 7)   //脏位
 /* 分页模式相关 */
-#define SATP_SV39 (8L << 60)
+#define SATP_SV39 (8UL << 60)
 #define MAKE_SATP(pagetable) (SATP_SV39 | (((uint64_t)pagetable)))
 
 //函数接口

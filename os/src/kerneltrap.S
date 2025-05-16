@@ -1,11 +1,12 @@
 #异常(trap)的入口
+.section .text.trampoline
 .globl __alltraps
 .align 4   
 __alltraps:
     # 交换sp和sscratch的值，这样sp指向内核栈，sscratch存储用户栈的地址
     csrrw sp, sscratch, sp
     # 在内核栈为TrapContext分配空间，大小为34个8字节
-    addi sp, sp, -34*8
+    # addi sp, sp, -34*8
     # 保存通用寄存器，其中sp(x2)不需要保存，因为已经保存在sscratch中
     sd x1, 1*8(sp)
     sd x3, 3*8(sp)
@@ -46,23 +47,31 @@ __alltraps:
     # 读取 sscratch 并保存
     csrr t2, sscratch
     sd t2, 2*8(sp)
-    # 将 sp 的值传递给 a0，从而trap_handler可以访问用户程序通过内核栈传递的数据
-    mv a0, sp
-    call trap_handler
+    # 读取kernel_satp和trap_handler到t0和t1
+    ld t0, 34*8(sp)
+    ld t1, 36*8(sp)
+    # 切换到内核栈
+    ld sp, 35*8(sp)
+    # 切换到内核页表、刷新TLB并跳转到trap_handler
+    csrw satp, t0
+    sfence.vma
+    jr t1
 
 # 异常(trap)返回
 .globl __restore
 .align 4
 __restore:
-    #将sp指向a0，即TrapContext处，此处需要注释掉
-    #mv sp, a0
-    #从内核栈中加载并还原sstatus、sepc和sscratch
+    # 接受的参数a0为*TrapContext，即内核栈，a1为app页表
+    # 切换到用户页表和内核栈
+    csrw satp, a1
+    sfence.vma
+    csrw sscratch, a0
+    mv sp, a0
+    # 恢复Trap上下文
     ld t0, 32*8(sp)
     ld t1, 33*8(sp)
-    ld t2, 2*8(sp)
     csrw sstatus, t0
     csrw sepc, t1
-    csrw sscratch, t2
     #还原通用寄存器
     ld x1, 1*8(sp)
     ld x3, 3*8(sp)
@@ -95,10 +104,8 @@ __restore:
     ld x30, 30*8(sp)
     ld x31, 31*8(sp)
 
-    #将TrapContext从内核栈中释放
-    addi sp, sp, 34*8
-    #交换sp和sscratch的值，此时sp指向用户栈，sscratch存储内核栈的地址
-    csrrw sp, sscratch, sp
+    #切换回用户栈
+    ld sp, 2*8(sp)
     #将CPU特权级从S降为U，并跳转到sepc指向的地址
     sret
 

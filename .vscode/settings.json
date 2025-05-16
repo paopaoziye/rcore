@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "os.h": "c",
+        "*.code": "c",
+        "address.h": "c",
+        "loader.h": "c",
+        "alloc.h": "c"
+    }
+}

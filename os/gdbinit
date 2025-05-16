@@ -1,0 +1,7 @@
+#gdb启动脚本
+#自动反汇编下一行要执行的代码
+set disassemble-next-line on
+b _start
+#将qemu作为gdb的服务端
+target remote : 1234
+c

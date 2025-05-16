@@ -55,3 +55,8 @@ void frame_alloctor_init(){
     printk("Memoery start:%p\n",kernelend);
     printk("Memoery end:%p\n",PHYSTOP);
 }
+/* 内存分配的封装 */
+PhysPageNum kalloc(void){
+    PhysPageNum frame = StackFrameAllocator_alloc(&FrameAllocatorImpl);
+    return frame;
+}

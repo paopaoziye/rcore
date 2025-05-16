@@ -77,6 +77,10 @@ mkdir $SHELL_FOLDER/output/os
 fi
 # 切换到output/os
 cd $SHELL_FOLDER/os
+# 编译执行app加载模块
+make build_app
+./build.out
+# 编译os
 make
 cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
 make clean

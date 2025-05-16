@@ -3,6 +3,7 @@
 
 //内核页表
 PageTable kernel_pagetable;
+uint64_t kernel_satp;
 /* 从一个uint64_t中提取物理地址 */
 PhysAddr phys_addr_from_size_t(uint64_t v){
     PhysAddr addr;
@@ -221,11 +222,17 @@ PageTable kvmmake(void){
     PageTable_map(&pt,virt_addr_from_size_t((uint64_t)etext),phys_addr_from_size_t((uint64_t)etext ), \
                     PHYSTOP - (uint64_t)etext , PTE_R | PTE_W ) ;
     printk("finish kernel data and physical RAM map!\n");
+    //映射跳板页
+    PageTable_map(&pt, virt_addr_from_size_t(TRAMPOLINE), phys_addr_from_size_t((uint64_t)trampoline), \
+                    PAGE_SIZE, PTE_R | PTE_X );
+    printk("finish TRAMPOLINE Page map : %p!\n",TRAMPOLINE);         
+    proc_mapstacks(&pt);
     return pt;
 }
 /* 创建内核页表 */
 void kvminit(){
   kernel_pagetable = kvmmake();
+  kernel_satp = MAKE_SATP(kernel_pagetable.root_ppn.value);
 }
 /* 开启分页模式并将内核页表写入satp寄存器 */
 void kvminithart(){

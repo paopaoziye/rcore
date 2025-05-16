@@ -10,6 +10,7 @@
 #include "task.h"
 #include "address.h"
 #include "assert.h"
+#include "loader.h"
 
 #include "stdio.h"
 #include "stack.h"
@@ -25,14 +26,13 @@ extern void __alltraps(void);
 extern void __restore(pt_regs *next);
 /* switch.S */
 extern void __switch(TaskContext *current_task_cx_ptr,TaskContext* next_task_cx_ptr );
-/* task.c */
-extern void task_create(void (*task_entry)(void));
-extern void task_init(void);
-extern void run_first_task();
-extern void schedule();
-extern void task_delay(volatile int count);
 /* trap.c */
 extern void trap_init(void);
+extern void trap_from_kernel(void);
+void set_kernel_trap_entry(void);
+void set_user_trap_entry(void);
+void trap_handler(void);
+void trap_return(void);
 /* app.c */
 extern size_t sys_write(size_t fd, const char* buf, size_t len);
 extern size_t sys_yield();

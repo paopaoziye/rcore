@@ -6,6 +6,7 @@
         "stdint.h": "c",
         "sbi.h": "c",
         "address.h": "c",
-        "stack.h": "c"
+        "stack.h": "c",
+        "task.h": "c"
     }
 }

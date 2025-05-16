@@ -1,8 +1,9 @@
 #指定交叉编译工具链前缀
 CROSS_COMPILE = riscv64-unknown-elf-
-#编译选项：不链接标准库、禁用GCC内置函数优化并使用medany代码模型
-CFLAGS = -nostdlib -fno-builtin -mcmodel=medany
-
+#编译选项：不链接标准库、禁用GCC内置函数优化、使用medany代码模型并生成调试信息
+CFLAGS = -nostdlib -fno-builtin -mcmodel=medany -g
+#指定调试器
+GDB = riscv64-unknown-elf-gdb
 #定义对应的编译工具
 CC = ${CROSS_COMPILE}gcc
 OBJCOPY = ${CROSS_COMPILE}objcopy
@@ -13,6 +14,7 @@ SRCS_ASM = \
 	entry.S \
 	kerneltrap.S \
 	switch.S \
+	link_app.S \
 #c源文件列表
 SRCS_C = \
 	sbi.c \
@@ -28,8 +30,9 @@ SRCS_C = \
 	vsprintf.c \
 	address.c \
 	alloc.c \
-	stack.c\
-	assert.c\
+	stack.c \
+	assert.c \
+	loader.c \
 
 #相关路径
 INCLUDE:=-I./include/os
@@ -53,9 +56,18 @@ os.elf: ${OBJS}
 
 %.o : $(SRC)/%.S
 	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
+#将build.c编译为可执行文件build.out
+build_app: build.c
+	gcc $< -o build.out
+#声明debug不是一个真实的目标文件，而是一个抽象的操作命令
+#以安静模式调试os.elf，并自动加载./gdbinit 初始化脚本
+.PHONY : debug
+debug: 
+	@echo "os debug start..."
+	@${GDB} os.elf -q -x ./gdbinit
 
 #声明clean不是一个真实的目标文件，而是一个抽象的操作命令
-#删除当前目录下所有.o、.bin和 .elf文件
+#删除当前目录下所有.o和.bin，这里不删除.elf文件
 .PHONY : clean
 clean:
-	rm -rf *.o *.bin *.elf
+	rm -rf *.o *.bin 
