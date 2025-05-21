@@ -6,6 +6,7 @@ int _vsnprintf(char * out, size_t n, const char* s, va_list vl);
 int printf(const char* s, ...);
 int printk(const char* s, ...);
 void panic(char *s);
+char getchar();
 //文件描述符
 typedef enum std_fd_t
 {

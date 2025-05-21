@@ -16,6 +16,7 @@ PhysPageNum StackFrameAllocator_alloc(StackFrameAllocator *allocator);
 void StackFrameAllocator_dealloc(StackFrameAllocator *allocator, PhysPageNum ppn);
 void frame_alloctor_init();
 PhysPageNum kalloc(void);
+void kfree(PhysPageNum ppn);
 //内存分配器
 extern StackFrameAllocator FrameAllocatorImpl;
 #endif

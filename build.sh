@@ -71,6 +71,7 @@ $CROSS_PREFIX-objcopy -O binary -S $SHELL_FOLDER/output/trusted_domain/trusted_f
 $CROSS_PREFIX-objdump --source --demangle --disassemble --reloc --wide $SHELL_FOLDER/output/trusted_domain/trusted_fw.elf > $SHELL_FOLDER/output/trusted_domain/trusted_fw.lst
 
 # 编译os
+echo "------------------------- 编译timer os -------------------------------"
 # 如果没有output/os则创建
 if [ ! -d "$SHELL_FOLDER/output/os" ]; then  
 mkdir $SHELL_FOLDER/output/os
@@ -86,6 +87,7 @@ cp $SHELL_FOLDER/os/os.bin $SHELL_FOLDER/output/os/os.bin
 make clean
 
 # 合成firmware固件
+echo "------------------------- 合成firmware固件 ----------------------------"
 # 如果没有output/fw目录则创建
 if [ ! -d "$SHELL_FOLDER/output/fw" ]; then  
 mkdir $SHELL_FOLDER/output/fw

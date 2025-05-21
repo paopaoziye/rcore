@@ -23,3 +23,23 @@ void* memset(void *dest,int ch,size_t count){
     }
     return dest;
 }
+//把 lhs1 所指向的字符串和 rhs2 所指向的字符串进行比较
+int strcmp(const char *lhs, const char *rhs)
+{
+    while (*lhs == *rhs && *lhs!= EOS && *rhs != EOS)
+    {
+        lhs++;
+        rhs++;
+    }
+    return *lhs < *rhs ? -1 : *lhs > *rhs;
+}
+void strncat(char *dest, const char *src, int n) {
+    while (*dest) {
+        dest++;
+    }
+    while (n > 0 && *src) {
+        *dest++ = *src++;
+        n--;
+    }
+    *dest = '\0';
+}

@@ -41,7 +41,7 @@ LIB:=./lib
 #将源文件列表转化为对应的目标文件列表，避免手动列出每个.o文件
 OBJS = $(SRCS_ASM:.S=.o)
 OBJS += $(SRCS_C:.c=.o)
-
+all:build_app os.elf
 #os.elf的依赖文件为OBJS，只有OBJS中的某个.o文件更新时，才会重新构建os.elf
 #将.o文件编译为os.elf，并基于os.elf生成对应的os.bin
 os.elf: ${OBJS}
@@ -58,7 +58,9 @@ os.elf: ${OBJS}
 	${CC} ${CFLAGS} $(INCLUDE) -c -o $@ $<
 #将build.c编译为可执行文件build.out
 build_app: build.c
+	@$(MAKE) -C ./user
 	gcc $< -o build.out
+	./build.out
 #声明debug不是一个真实的目标文件，而是一个抽象的操作命令
 #以安静模式调试os.elf，并自动加载./gdbinit 初始化脚本
 .PHONY : debug
@@ -70,4 +72,5 @@ debug:
 #删除当前目录下所有.o和.bin，这里不删除.elf文件
 .PHONY : clean
 clean:
-	rm -rf *.o *.bin 
+	rm -rf *.o *.bin *.out *.map *.elf
+	rm -rf ./user/bin/*

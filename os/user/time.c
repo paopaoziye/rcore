@@ -1,10 +1,15 @@
 #include "os.h"
 
 int main(){
-    uint64_t cur_time = 0;
+    int pid = sys_fork();
     while(1){
-        cur_time = sys_gettime();
-        printf("current_time:%x\n",cur_time);
+        if(pid > 0){
+            //printf("father\n");
+        }else if(pid == 0){
+            //printf("child\n");
+        }else{
+
+        }
     }
     return 0;
 }

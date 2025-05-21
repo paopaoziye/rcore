@@ -26,6 +26,8 @@ extern char trampoline[];                   //跳板页物理地址
 //计算应用内核栈的地址，每个应用的内核栈下都有一个无效的守卫页
 #define KSTACK(p) (TRAMPOLINE - ((p)+1)* 2*PAGE_SIZE)
 #define MAKE_PAGETABLE(satp) ( satp & (SATP_SV39 - 1) )
+#define PTE2PA(pte) (((pte) >> 10) << 12)
+#define PTE_FLAGS(pte) ((pte) & 0x3FF)
 /* 物理地址 */
 typedef struct {
     uint64_t value; 
@@ -97,5 +99,5 @@ void PageTable_unmap(PageTable* pt, VirtPageNum vpn);
 PageTable kvmmake(void);
 void kvminit();
 void kvminithart();
-
+void proc_freepagetable(PageTable* pt,uint64_t sz);
 #endif

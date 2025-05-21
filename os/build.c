@@ -60,6 +60,11 @@ void insert_app_data() {
     }
     //向link_app.S写入一段riscv汇编代码，定义最后一个应用程序的终止地址
     fprintf(f, "\n.quad app_%d_end", app_count - 1);
+    //向link_app.S写入一段riscv汇编代码，定义应用程序的名称
+    fprintf(f,"\n.global _app_names\n_app_names:");
+    for(int i = 0;i < app_count;i++){
+        fprintf(f,"\n.string \"%s\"",apps[i]);
+    }
     //向link_app.S写入一段riscv汇编代码，将app二进制文件嵌入内核
     for (int i = 0; i < app_count; i++) {
         printf("app_%d: %s\n", i, apps[i]);

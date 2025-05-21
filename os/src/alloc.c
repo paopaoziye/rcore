@@ -52,11 +52,13 @@ void frame_alloctor_init(){
     StackFrameAllocator_init(&FrameAllocatorImpl, \
             ceil_phys(phys_addr_from_size_t((uint64_t)kernelend)), \
             ceil_phys(phys_addr_from_size_t(PHYSTOP)));
-    printk("Memoery start:%p\n",kernelend);
-    printk("Memoery end:%p\n",PHYSTOP);
 }
 /* 内存分配的封装 */
 PhysPageNum kalloc(void){
     PhysPageNum frame = StackFrameAllocator_alloc(&FrameAllocatorImpl);
     return frame;
+}
+/* 内存释放的封装 */
+void kfree(PhysPageNum ppn){
+    StackFrameAllocator_dealloc(&FrameAllocatorImpl,ppn);
 }

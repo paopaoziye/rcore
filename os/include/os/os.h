@@ -18,9 +18,15 @@
 
 /* syscall.c以及系统调用号 */
 extern uint64_t __SYSCALL(size_t syscall_id, reg_t arg1, reg_t arg2, reg_t arg3);
+extern void exec(char* name);
 #define __NR_write 64
 #define __NR_sched_yield 124
 #define __NR_gettimeofday 169
+#define __NR_read 63
+#define __NR_clone 220
+#define __NR_execve 221
+#define __NR_exit 93
+#define __NR_waitpid 95
 /* kerneltrap.S*/
 extern void __alltraps(void);
 extern void __restore(pt_regs *next);
@@ -37,6 +43,11 @@ void trap_return(void);
 extern size_t sys_write(size_t fd, const char* buf, size_t len);
 extern size_t sys_yield();
 extern uint64_t sys_gettime();
+int sys_fork();
+int sys_waitpid();
+int sys_exit(uint64_t exit_code);
+int sys_exec(char* name);
+int sys_read(size_t fd, const char* buf, size_t len);
 /* timer.c */
 extern void timer_init(void);
 extern void set_next_trigger(void);
@@ -44,4 +55,5 @@ extern uint64_t get_time_us(void);
 /* sbi.c */
 extern void sbi_set_timer(uint64_t stime_value);
 extern void sbi_console_putchar(int ch);
+extern int sbi_console_getchar(void);
 #endif

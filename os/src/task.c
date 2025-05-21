@@ -1,16 +1,13 @@
 #include "task.h"
 #include "alloc.h"
-//用户栈、内核栈大小以及任务最大数量
-#define USER_STACK_SIZE (4096 * 2)
-#define KERNEL_STACK_SIZE (4096 * 2)
-#define MAX_TASKS 10
 //为内核栈和用户栈开辟空间
 uint8_t KernelStack[MAX_TASKS][KERNEL_STACK_SIZE];
 uint8_t UserStack[MAX_TASKS][USER_STACK_SIZE];
 //任务队列，当前任务号和任务总数
 struct TaskControlBlock tasks[MAX_TASKS];
 static int _current = 0;
-static int _top = 0;
+int _top = 0;
+static int nextpid = 0;
 /* 初始化任务上下文 */
 struct TaskContext tcx_init(reg_t kstack_ptr) {
     struct TaskContext task_ctx;
@@ -74,12 +71,11 @@ void schedule(){
     int next = _current + 1;
     next = next % _top;
     //修改任务状态并进行上下文切换
-    if(tasks[next].task_state == Ready)
+    if(tasks[next].task_state == Ready || tasks[next].task_state == Running)
     {
         struct TaskContext *current_task_cx_ptr = &(tasks[_current].task_context);
         struct TaskContext *next_task_cx_ptr = &(tasks[next].task_context);
         tasks[next].task_state = Running;
-        tasks[_current].task_state = Ready;
         _current = next;
         __switch(current_task_cx_ptr,next_task_cx_ptr);
     }
@@ -101,17 +97,15 @@ void proc_mapstacks(PageTable* kpgtbl){
             panic("kalloc");
         //计算对应内核栈所在虚拟地址
         uint64_t va = KSTACK((int)(p-tasks));
-        PageTable_map(kpgtbl,virt_addr_from_size_t(va+PAGE_SIZE),phys_addr_from_size_t((uint64_t)pa), \
-                      PAGE_SIZE,PTE_R | PTE_W);
-        printk("finish task%d stack map : %p!\n",(int)(p-tasks),va); 
-        p->kstack = va +  2 * PAGE_SIZE;
+        PageTable_map(kpgtbl,virt_addr_from_size_t(va),phys_addr_from_size_t((uint64_t)pa), \
+                      PAGE_SIZE,PTE_R | PTE_W); 
+        p->kstack = va + PAGE_SIZE;
     }
 }
 /* 为每个应用程序分配一页内存用与存放trap，同时初始化任务上下文 */
 void proc_trap(struct TaskControlBlock *p){
   // 为每个程序分配一页trap物理内存
   p->trap_cx_ppn = phys_addr_from_phys_page_num(kalloc()).value;
-  printk("trap value:%p\n",p->trap_cx_ppn);
   // 初始化任务上下文全部为0
   memset(&p->task_context, 0 ,sizeof(p->task_context));
 }
@@ -128,7 +122,6 @@ void proc_pagetable(struct TaskControlBlock *p){
   PageTable_map(&pagetable,virt_addr_from_size_t(TRAPFRAME),phys_addr_from_size_t(p->trap_cx_ppn), \
                 PAGE_SIZE, PTE_R | PTE_W );
   p->pagetable = pagetable;
-  printk("p->pagetable:%p\n",p->pagetable.root_ppn.value);
 }
 /* 创建app页表 */
 TaskControlBlock* task_create_pt(size_t app_id){
@@ -151,6 +144,17 @@ uint64_t get_current_trap_cx(){
 uint64_t current_user_token(){
    return MAKE_SATP(tasks[_current].pagetable.root_ppn.value);
 }
+/* 为进程分配PID */
+int allocpid(){
+    int pid = 0;
+    pid = nextpid;
+    nextpid += 1;
+    return pid;
+}
+/* 获取当前进程控制块 */
+struct TaskControlBlock* current_proc(){
+  return &tasks[_current];
+}
 void app_init(size_t app_id){
     //获取app的trap上下文
     TrapContext* cx_ptr = (TrapContext*)tasks[app_id].trap_cx_ppn;
@@ -172,15 +176,128 @@ void app_init(size_t app_id){
     cx_ptr->trap_handler = (uint64_t)trap_handler;
 
     /* 构造每个任务任务控制块中的任务上下文，设置 ra 寄存器为 trap_return 的入口地址*/
-    tasks[app_id].task_context = tcx_init((reg_t)cx_ptr);
+    tasks[app_id].task_context = tcx_init((reg_t)tasks[app_id].kstack);
     // 初始化 TaskStatus 字段为 Ready
     tasks[app_id].task_state = Ready;
+    /* 分配进程号 */
+    tasks[app_id].pid = allocpid();
 }
 void run_first_task(){
     tasks[0].task_state = Running;
     struct TaskContext *next_task_cx_ptr = &(tasks[0].task_context);
     struct TaskContext _unused ;
-    printk("task is running!\n");
     __switch(&_unused,next_task_cx_ptr);
     panic("unreachable in run_first_task!");
+}
+/* 初始化所有进程 */
+void proc_init(){
+    struct TaskControlBlock *p;
+    for(p = tasks;p < &tasks[MAX_TASKS];p++){
+        p->task_state = UnInit;
+    }
+}
+/* 为子进程创建页表 */
+struct TaskControlBlock* alloc_proc(){
+    struct TaskControlBlock* p;
+    for(p = tasks;p < &tasks[MAX_TASKS];p++){
+        if(p->task_state == UnInit)
+            goto found;
+    }
+    return NULL;
+found:
+    p->pid = allocpid();
+    p->task_state = Ready;
+    proc_trap(p);
+    proc_pagetable(p);
+    return p;
+}
+/* 复制父进程的地址空间 */
+int uvmcopy(PageTable* old,PageTable* new,uint64_t sz){
+    PageTableEntry* pte;
+    uint64_t pa,i;
+    uint8_t flags;
+
+    for(int i = 0;i < sz;i+=PAGE_SIZE){
+        VirtPageNum vpn = floor_virts(virt_addr_from_size_t(i));
+        pte = find_pte(old,vpn);
+
+        if(pte != 0){
+            /* 将PTE转化为物理地址 */
+            uint64_t phyaddr = PTE2PA(pte->bits);
+            /* 得到PTE的映射flags */
+            flags = PTE_FLAGS(pte->bits);
+            /* 分配一页内存 */
+            PhysPageNum ppn = kalloc();
+            uint64_t paddr = phys_addr_from_phys_page_num(ppn).value;
+            /* 内存拷贝 */
+            memcpy((void*)paddr,(void*)phyaddr,PAGE_SIZE);
+            /* 内存映射 */
+            PageTable_map(new,virt_addr_from_size_t(i),\
+                          phys_addr_from_size_t(paddr),PAGE_SIZE,flags);
+        }
+    }
+}
+/* 退出当前进程并调度 */
+void exit_curproc_and_run_next(uint64_t exit_code){
+    struct TaskControlBlock* p = current_proc();
+    /* 如果当前进程为0号进程，则触发异常 */
+    if(p->pid == 0){
+        panic("init exiting!");
+    }
+    p->exit_code = exit_code;
+    p->task_state = Zombie;
+    children_proc_clear(p);
+    _top--;
+    schedule();
+    panic("zombie exit"); 
+}
+/* 将一个进程的所有子进程挂在初始进程下 */
+void children_proc_clear(struct TaskControlBlock* p){
+    struct TaskControlBlock* children;
+    for(children = tasks;children < &tasks[MAX_TASKS];children++){
+        if(children->parent == p){
+            children->parent = &tasks[0];
+        }
+    } 
+}
+void freeproc(struct TaskControlBlock* p)
+{
+    proc_freepagetable(&p->pagetable, p->base_size);
+
+    p->pagetable.root_ppn.value = 0;
+    p->base_size = 0;
+    p->parent =  0;
+    p->ustack = 0;
+    p->entry = 0;
+    p->task_state = UnInit;
+    p->exit_code = 0;
+}
+/*  */
+int wait(){
+    struct TaskControlBlock* children;
+    struct TaskControlBlock* p = current_proc();
+    int pid,havekids;
+    while(1){
+        havekids = 0;
+        //如果有僵死子进程，则释放其资源
+        for(children = tasks;children < &tasks[MAX_TASKS];children++){
+            if(children->parent == p){
+                havekids = 1;
+                if(children->task_state == Zombie){
+                    pid = children->pid;
+                    freeproc(children);
+                    printk("child pid:%d\n",pid);
+                    return pid;
+                }
+            }
+        }
+        //如果没有子进程，返回-1
+        if(!havekids){
+            return -1;
+        }
+        //如果有子进程但是其没有退出，则进行调度
+        schedule();
+    }
+
+
 }

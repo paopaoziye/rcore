@@ -166,12 +166,12 @@ PageTableEntry* find_pte(PageTable* pt,VirtPageNum vpn){
     for(int i = 0;i < 3;i++){
         //提取页表项
         PageTableEntry* pte = &get_pte_array(ppn)[idx[i]];
-        if(i == 2){
-            return pte;
-        }
         //如果页表项为空，则分配一个新的物理页并新建一个页表项
         if(!PageTableEntry_is_valid(pte)){
             return NULL;
+        }
+        if(i == 2){
+            return pte;
         }
         //更新页表为下一级页表
         ppn = PageTableEntry_ppn(pte);
@@ -212,20 +212,15 @@ PageTable kvmmake(void){
     PageTable pt;
     PhysPageNum root_ppn =  StackFrameAllocator_alloc(&FrameAllocatorImpl);
     pt.root_ppn = root_ppn;
-    printk("root_ppn:%p\n",phys_addr_from_phys_page_num(root_ppn));
     //映射内核代码段并打印其结束地址，其权限为可执行和只读
-    printk("etext:%p\n",(uint64_t)etext);
     PageTable_map(&pt,virt_addr_from_size_t(KERNBASE),phys_addr_from_size_t(KERNBASE), \
                     (uint64_t)etext-KERNBASE , PTE_R | PTE_X ) ;
-    printk("finish kernel text map!\n");
     //映射内核数据段和RAM，其权限为可读写
     PageTable_map(&pt,virt_addr_from_size_t((uint64_t)etext),phys_addr_from_size_t((uint64_t)etext ), \
                     PHYSTOP - (uint64_t)etext , PTE_R | PTE_W ) ;
-    printk("finish kernel data and physical RAM map!\n");
     //映射跳板页
     PageTable_map(&pt, virt_addr_from_size_t(TRAMPOLINE), phys_addr_from_size_t((uint64_t)trampoline), \
-                    PAGE_SIZE, PTE_R | PTE_X );
-    printk("finish TRAMPOLINE Page map : %p!\n",TRAMPOLINE);         
+                    PAGE_SIZE, PTE_R | PTE_X );     
     proc_mapstacks(&pt);
     return pt;
 }
@@ -237,7 +232,6 @@ void kvminit(){
 /* 开启分页模式并将内核页表写入satp寄存器 */
 void kvminithart(){
   //构造riscv的 satp 寄存器值
-  printk("satp:%lx\n",MAKE_SATP(kernel_pagetable.root_ppn.value));
   sfence_vma();
   //将上述构造的 satp 寄存器值写入 satp 寄存器
   w_satp(MAKE_SATP(kernel_pagetable.root_ppn.value));
@@ -245,5 +239,48 @@ void kvminithart(){
   sfence_vma();
   //打印当前satp寄存器的值
   reg_t satp = r_satp();
-  printk("satp:%lx\n",satp);
+}
+/* 取消映射 */
+void uvmunmap(PageTable* pt,VirtPageNum vpn,uint64_t npages,int do_free){
+    PageTableEntry* pte;
+    uint64_t i;
+    for(i = vpn.value;i < vpn.value + npages;i++){
+        pte = find_pte(pt,virt_page_num_from_size_t(i));
+        if(pte != 0){
+            if(do_free){
+                uint64_t phyaddr = PTE2PA(pte->bits);
+                PhysPageNum ppn = floor_phys(phys_addr_from_size_t(phyaddr));
+                kfree(ppn);
+            }
+            *pte = PageTableEntry_empty();
+        }
+    }
+
+}
+/* 解除页表映射关系并释放内存 */
+void freewalk(PhysPageNum ppn){
+    //遍历页表项
+    for(int i = 0;i < 512;i++){
+        PageTableEntry* pte = &get_pte_array(ppn)[i];
+        if((pte->bits & PTE_V) && (pte->bits & (PTE_R | PTE_W | PTE_X)) == 0){
+            PhysPageNum child_ppn = PageTableEntry_ppn(pte);
+            freewalk(child_ppn);
+            *pte = PageTableEntry_empty();
+        }else if(pte->bits & PTE_V){
+            panic("freewalk:leaf!");
+        }
+    }
+    kfree(ppn);
+}
+void uvmfree(PageTable* pt,uint64_t sz){
+    if(sz > 0){
+        uvmunmap(pt,floor_virts(virt_addr_from_size_t(0)),sz/PAGE_SIZE,1);
+    }
+    freewalk(pt->root_ppn);
+}
+/* 销毁进程地址空间 */
+void proc_freepagetable(PageTable* pt,uint64_t sz){
+    uvmunmap(pt,floor_virts(virt_addr_from_size_t(TRAMPOLINE)),1,0);
+    uvmunmap(pt,floor_virts(virt_addr_from_size_t(TRAPFRAME)),1,0);
+    uvmfree(pt,sz);
 }

@@ -2,10 +2,14 @@
 #define OS_LOADER_H__
 
 #include "os.h"
+#include "task.h"
+//前向声明
+struct TaskControlBlock;
 //存储app二进制文件起始地址和大小
 typedef struct {
     uint64_t start;
     uint64_t size;
+    uint64_t id;
 } AppMetadata;
 
 //ELF文件解析相关宏定义
@@ -53,5 +57,9 @@ typedef struct {
 size_t get_num_app();
 AppMetadata  get_app_data(size_t app_id);
 void load_app(size_t app_id);
-
+void get_app_names();
+AppMetadata  get_app_data_by_name(char* path);
+void elf_check(elf64_ehdr_t *ehdr);
+void load_segment(elf64_ehdr_t *ehdr,struct TaskControlBlock* proc);
+void proc_ustack(struct TaskControlBlock* proc);
 #endif

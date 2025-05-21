@@ -39,8 +39,10 @@ void trap_handler(){
 		{
 		/* U模式下的syscall */
 		case 8:
-			cx->a0 = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
-			cx->sepc += 8;
+		    cx->sepc += 8;
+			uint64_t result = __SYSCALL(cx->a7,cx->a0,cx->a1,cx->a2);
+			cx = (TrapContext*)get_current_trap_cx();
+			cx->a0 = result;
 			break;
 		default:
 			printk("undfined exception scause:%x\n",scause);

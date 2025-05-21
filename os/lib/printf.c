@@ -19,3 +19,9 @@ int printf(const char* s, ...)
 	va_end(vl);
 	return res;
 }
+/* 从串口获取一个字符 */
+char getchar(){
+	char data[1];
+	sys_read(stdin,data,1);
+	return data[0];
+}
