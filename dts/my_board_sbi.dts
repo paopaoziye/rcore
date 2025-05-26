@@ -41,8 +41,8 @@
 				regions = <&tmem 0x7>, <&tuart 0x7>, <&allmem 0x7>;  //各个内存节点的权限
 				boot-hart = <&cpu7>;                                 //用于boot的core
 				next-arg1 = <0x0 0x00000000>;                        //下级程序的参数
-				next-addr = <0x0 0xb0000000>;                        //下级程序的起始地址
-				next-mode = <0x0>;                                   //下级程序的允许模式 0为U模式，1为S模式
+				next-addr = <0x0 0xBF800000>;                        //下级程序的起始地址
+				next-mode = <0x1>;                                   //下级程序的允许模式 0为U模式，1为S模式
 				system-reset-allowed;                                //允许复位
 			};
 			//定义domian节点，该domain节点为untrusted-domain

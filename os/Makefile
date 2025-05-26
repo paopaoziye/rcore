@@ -33,6 +33,8 @@ SRCS_C = \
 	stack.c \
 	assert.c \
 	loader.c \
+	bio.c \
+	virtio_disk.c\
 
 #相关路径
 INCLUDE:=-I./include/os

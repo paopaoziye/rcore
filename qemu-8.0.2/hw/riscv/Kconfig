@@ -92,3 +92,4 @@ config MY_BOARD
     select RISCV_APLIC
     select SIFIVE_PLIC
     select GOLDFISH_RTC
+    select VIRTIO_MMIO

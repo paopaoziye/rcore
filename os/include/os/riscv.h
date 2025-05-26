@@ -8,6 +8,11 @@
 #define SIE_STIE (1L << 5) //时钟中断
 #define SIE_SSIE (1L << 1) //软件中断
 
+#define SSTATUS_SPP (1L << 8)  // Previous mode, 1=Supervisor, 0=User
+#define SSTATUS_SPIE (1L << 5) // Supervisor Previous Interrupt Enable
+#define SSTATUS_UPIE (1L << 4) // User Previous Interrupt Enable
+#define SSTATUS_SIE (1L << 1)  // Supervisor Interrupt Enable
+#define SSTATUS_UIE (1L << 0)  // User Interrupt Enable
 /* 读取 sepc 寄存器的值，记录了trap发生之前的执行的最后一条指令地址 */
 static inline reg_t r_sepc()
 {
@@ -95,5 +100,24 @@ static inline void sfence_vma()
 {
   // the zero, zero means flush all TLB entries.
   asm volatile("sfence.vma zero, zero");
+}
+// 关闭中断
+static inline void intr_off()
+{
+  w_sstatus(r_sstatus() & ~SSTATUS_SIE);
+}
+
+// 打开中断
+static inline void intr_on()
+{
+  w_sstatus(r_sstatus() | SSTATUS_SIE);
+}
+
+// are device interrupts enabled?
+static inline int
+intr_get()
+{
+  reg_t x = r_sstatus();
+  return (x & SSTATUS_SIE) != 0;
 }
 #endif

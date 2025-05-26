@@ -26,16 +26,17 @@
 
 //板子各个硬件的地址，MemMapEntry的成员分别为基址和占用地址长度
 static const MemMapEntry my_board_memmap[] = {
-    [MY_BOARD_MROM]  = {        0x0,        0x8000 },   
-    [MY_BOARD_SRAM]  = {     0x8000,        0x8000 },
-    [MY_BOARD_CLINT] = { 0x02000000,       0x10000 }, 
-    [MY_BOARD_PLIC]  = { 0x0c000000,     MY_BOARD_PLIC_SIZE(MY_BOARD_CPUS_MAX * 2) }, 
-    [MY_BOARD_UART0] = { 0x10000000,         0x100 },
-    [MY_BOARD_UART1] = { 0x10001000,         0x100 },
-    [MY_BOARD_UART2] = { 0x10002000,         0x100 }, 
-    [MY_BOARD_RTC]   = { 0x10003000,        0x1000 },
-    [MY_BOARD_FLASH] = { 0x20000000,     0x2000000 }, 
-    [MY_BOARD_DRAM]  = { 0x80000000,    0x40000000 },   
+    [MY_BOARD_MROM]      = {        0x0,        0x8000 },   
+    [MY_BOARD_SRAM]      = {     0x8000,        0x8000 },
+    [MY_BOARD_CLINT]     = { 0x02000000,       0x10000 }, 
+    [MY_BOARD_PLIC]      = { 0x0c000000,     MY_BOARD_PLIC_SIZE(MY_BOARD_CPUS_MAX * 2) }, 
+    [MY_BOARD_UART0]     = { 0x10000000,         0x100 },
+    [MY_BOARD_UART1]     = { 0x10001000,         0x100 },
+    [MY_BOARD_UART2]     = { 0x10002000,         0x100 }, 
+    [MY_BOARD_RTC]       = { 0x10003000,        0x1000 },
+    [MY_BOARD_VIRTIO0]   = { 0x10100000,        0x1000 },
+    [MY_BOARD_FLASH]     = { 0x20000000,     0x2000000 }, 
+    [MY_BOARD_DRAM]      = { 0x80000000,    0x40000000 },   
 };
 //初始化CPU，参考virt_machine_init
 static void my_board_cpu_create(MachineState *machine){
@@ -226,7 +227,13 @@ static void my_board_serial_create(MachineState *machine)
         0, qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_UART2_IRQ), 399193,
         serial_hd(2), DEVICE_LITTLE_ENDIAN);
 }
-
+//创建virtio
+static void my_board_virtio_mmio_create(MachineState *machine)
+{
+    MyBoardState *s = RISCV_MY_BOARD_MACHINE(machine);
+    sysbus_create_simple("virtio-mmio", my_board_memmap[MY_BOARD_VIRTIO0].base,
+        qdev_get_gpio_in(DEVICE(s->plic[0]), MY_BOARD_VIRTIO0_IRQ));  
+}
 //类初始化函数
 static void my_board_machine_init(MachineState *machine)
 {
@@ -244,6 +251,8 @@ static void my_board_machine_init(MachineState *machine)
     my_board_rtc_create(machine);
     //创建clint
     my_board_serial_create(machine);
+    //创建virtio
+    my_board_virtio_mmio_create(machine);
 }
 //实例初始化函数
 static void my_board_machine_instance_init(Object *obj)

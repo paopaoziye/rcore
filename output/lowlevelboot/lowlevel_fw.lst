@@ -37,10 +37,10 @@ Disassembly of section .text:
     20000054:	20400513          	li	a0,516
     20000058:	0552                	slli	a0,a0,0x14
     2000005a:	6585                	lui	a1,0x1
-    2000005c:	b005859b          	addiw	a1,a1,-1280
+    2000005c:	bf85859b          	addiw	a1,a1,-1032
     20000060:	05d2                	slli	a1,a1,0x14
     20000062:	6605                	lui	a2,0x1
-    20000064:	b046061b          	addiw	a2,a2,-1276
+    20000064:	bfc6061b          	addiw	a2,a2,-1028
     20000068:	0652                	slli	a2,a2,0x14
     2000006a:	00c5fa63          	bgeu	a1,a2,2000007e <_start+0x7e>
     2000006e:	00052283          	lw	t0,0(a0)
